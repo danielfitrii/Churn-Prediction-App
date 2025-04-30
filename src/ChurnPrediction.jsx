@@ -15,6 +15,8 @@ export default function ChurnPrediction() {
     });
 
     const [selectedModel, setSelectedModel] = useState("logistic");
+    const [prediction, setPrediction] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     const [modelInfo] = useState({
         logistic: {
@@ -43,7 +45,55 @@ export default function ChurnPrediction() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log("Submitted data:", formData, "Model:", selectedModel);
+        setLoading(true);
+
+        setTimeout(() => {
+            let churnScore = 0;
+
+            // Base scoring
+            if (formData.contract === "Month-to-month") churnScore += 30;
+            else if (formData.contract === "One year") churnScore += 15;
+
+            if (formData.paymentMethod === "Electronic check") churnScore += 20;
+            if (formData.internetService === "Fiber optic") churnScore += 15;
+            if (formData.onlineSecurity === "No") churnScore += 10;
+            if (formData.techSupport === "No") churnScore += 10;
+            if (formData.monthlyCharges > 80) churnScore += 15;
+
+            churnScore -= Math.min(formData.tenure / 2, 20);
+
+            // Model-specific logic
+            if (selectedModel === "logistic") {
+                churnScore = churnScore * 0.95 + (Math.random() * 6 - 3);
+            } else {
+                if (
+                    formData.tenure < 6 &&
+                    formData.contract === "Month-to-month"
+                ) churnScore += 10;
+                if (
+                    formData.monthlyCharges > 90 &&
+                    formData.internetService === "Fiber optic"
+                ) churnScore += 8;
+                if (churnScore > 50) churnScore *= 1.1;
+                if (churnScore < 20) churnScore *= 0.9;
+                churnScore += Math.random() * 8 - 4;
+            }
+
+            const normalized = Math.max(0, Math.min(100, churnScore));
+            const riskLevel =
+                normalized < 30 ? "Low" : normalized < 70 ? "Medium" : "High";
+
+            setPrediction({
+                churnProbability: normalized.toFixed(1),
+                riskLevel,
+                model:
+                    selectedModel === "logistic"
+                        ? "Logistic Regression"
+                        : "Random Forest",
+            });
+
+            setLoading(false);
+        }, 800);
     };
 
     return (
@@ -52,7 +102,7 @@ export default function ChurnPrediction() {
                 Customer Churn Prediction
             </h1>
 
-            {/* Model selection toggle buttons */}
+            {/* Model selection toggle */}
             <div className="flex space-x-4 mb-4">
                 <button
                     type="button"
@@ -60,7 +110,10 @@ export default function ChurnPrediction() {
                             ? "bg-blue-600 text-white"
                             : "bg-gray-200 text-gray-700"
                         }`}
-                    onClick={() => setSelectedModel("logistic")}
+                    onClick={() => {
+                        setSelectedModel("logistic");
+                        setPrediction(null);
+                    }}
                 >
                     Logistic Regression
                 </button>
@@ -70,13 +123,16 @@ export default function ChurnPrediction() {
                             ? "bg-blue-600 text-white"
                             : "bg-gray-200 text-gray-700"
                         }`}
-                    onClick={() => setSelectedModel("randomForest")}
+                    onClick={() => {
+                        setSelectedModel("randomForest");
+                        setPrediction(null);
+                    }}
                 >
                     Random Forest
                 </button>
             </div>
 
-            {/* Model info block */}
+            {/* Model info */}
             <div className="bg-blue-50 p-4 rounded-lg mb-6 text-sm text-blue-900">
                 <p className="font-medium mb-1">
                     {selectedModel === "logistic"
@@ -181,16 +237,38 @@ export default function ChurnPrediction() {
                     <button
                         type="submit"
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-300"
+                        disabled={loading}
                     >
-                        Predict Churn Risk
+                        {loading ? "Analyzing..." : "Predict Churn Risk"}
                     </button>
                 </div>
             </form>
+
+            {/* Prediction result (optional rendering comes next step) */}
+            {prediction && (
+                <div className="mt-8 p-4 border rounded bg-gray-50 text-center">
+                    <h2 className="text-lg font-medium text-gray-700 mb-2">
+                        Churn Risk:{" "}
+                        <span
+                            className={`font-bold text-2xl ${prediction.riskLevel === "Low"
+                                    ? "text-green-600"
+                                    : prediction.riskLevel === "Medium"
+                                        ? "text-yellow-500"
+                                        : "text-red-600"
+                                }`}
+                        >
+                            {prediction.churnProbability}%
+                        </span>
+                    </h2>
+                    <p className="text-sm text-gray-600">{prediction.riskLevel} Risk</p>
+                    <p className="text-xs text-blue-600 mt-1">{prediction.model}</p>
+                </div>
+            )}
         </div>
     );
 }
 
-// Reusable input and select components
+// Reusable input/select components
 function Input({ name, label, value, onChange }) {
     return (
         <div>
