@@ -107,8 +107,8 @@ export default function ChurnPrediction() {
                 <button
                     type="button"
                     className={`px-4 py-2 rounded ${selectedModel === "logistic"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-700"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-700"
                         }`}
                     onClick={() => {
                         setSelectedModel("logistic");
@@ -120,8 +120,8 @@ export default function ChurnPrediction() {
                 <button
                     type="button"
                     className={`px-4 py-2 rounded ${selectedModel === "randomForest"
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-700"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-700"
                         }`}
                     onClick={() => {
                         setSelectedModel("randomForest");
@@ -246,24 +246,66 @@ export default function ChurnPrediction() {
 
             {/* Prediction result (optional rendering comes next step) */}
             {prediction && (
-                <div className="mt-8 p-4 border rounded bg-gray-50 text-center">
-                    <h2 className="text-lg font-medium text-gray-700 mb-2">
-                        Churn Risk:{" "}
-                        <span
-                            className={`font-bold text-2xl ${prediction.riskLevel === "Low"
-                                    ? "text-green-600"
-                                    : prediction.riskLevel === "Medium"
-                                        ? "text-yellow-500"
-                                        : "text-red-600"
-                                }`}
-                        >
-                            {prediction.churnProbability}%
-                        </span>
+                <div className="mt-8 bg-gray-50 p-6 rounded-lg shadow-sm">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                        Prediction Result
                     </h2>
-                    <p className="text-sm text-gray-600">{prediction.riskLevel} Risk</p>
-                    <p className="text-xs text-blue-600 mt-1">{prediction.model}</p>
+
+                    <div className="text-center">
+                        <div className={`text-5xl font-bold mb-2 ${prediction.riskLevel === "Low"
+                                ? "text-green-500"
+                                : prediction.riskLevel === "Medium"
+                                    ? "text-yellow-500"
+                                    : "text-red-500"
+                            }`}>
+                            {prediction.churnProbability}%
+                        </div>
+                        <div className="text-lg font-medium text-gray-700">
+                            {prediction.riskLevel} Risk
+                        </div>
+                        <div className="text-sm text-blue-600 font-medium mt-1">
+                            {prediction.model}
+                        </div>
+                    </div>
+
+                    <div className="mt-4 text-sm text-gray-700">
+                        {prediction.riskLevel === "Low" && (
+                            <p>This customer has a low probability of churning. Keep up the good service!</p>
+                        )}
+                        {prediction.riskLevel === "Medium" && (
+                            <p>This customer has a moderate risk of churning. Consider offering incentives or support.</p>
+                        )}
+                        {prediction.riskLevel === "High" && (
+                            <p>This customer has a high risk of churning. Immediate intervention is recommended.</p>
+                        )}
+                    </div>
+
+                    {/* ✅ Key churn factors */}
+                    <div className="mt-6">
+                        <h3 className="font-semibold text-gray-800 mb-2">Key Churn Factors:</h3>
+                        <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                            {formData.contract === "Month-to-month" && (
+                                <li>Month-to-month contract increases churn risk</li>
+                            )}
+                            {formData.paymentMethod === "Electronic check" && (
+                                <li>Electronic check as payment method</li>
+                            )}
+                            {formData.internetService === "Fiber optic" && (
+                                <li>Fiber optic internet service has higher churn risk</li>
+                            )}
+                            {formData.onlineSecurity === "No" && <li>No online security</li>}
+                            {formData.techSupport === "No" && <li>No tech support</li>}
+                            {formData.tenure < 12 && <li>Low customer tenure (under 12 months)</li>}
+                            {selectedModel === "randomForest" &&
+                                formData.tenure < 6 &&
+                                formData.contract === "Month-to-month" && (
+                                    <li>New customer with month-to-month contract (high risk combo)</li>
+                                )}
+                        </ul>
+                    </div>
                 </div>
             )}
+
         </div>
     );
 }
