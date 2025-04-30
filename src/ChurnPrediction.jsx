@@ -16,6 +16,23 @@ export default function ChurnPrediction() {
 
     const [selectedModel, setSelectedModel] = useState("logistic");
 
+    const [modelInfo] = useState({
+        logistic: {
+            accuracy: "82.4%",
+            precision: "79.1%",
+            recall: "73.8%",
+            description:
+                "Simple, fast, and provides probability estimates. Good for understanding feature importance.",
+        },
+        randomForest: {
+            accuracy: "87.2%",
+            precision: "84.5%",
+            recall: "79.3%",
+            description:
+                "Ensemble method with higher accuracy. Better handles non-linear relationships and feature interactions.",
+        },
+    });
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData({
@@ -35,7 +52,7 @@ export default function ChurnPrediction() {
                 Customer Churn Prediction
             </h1>
 
-            {/* ✅ Model selection toggle buttons */}
+            {/* Model selection toggle buttons */}
             <div className="flex space-x-4 mb-4">
                 <button
                     type="button"
@@ -59,14 +76,30 @@ export default function ChurnPrediction() {
                 </button>
             </div>
 
-            <p className="text-sm text-gray-600 mb-6">
-                Selected Model:{" "}
-                <strong>
+            {/* Model info block */}
+            <div className="bg-blue-50 p-4 rounded-lg mb-6 text-sm text-blue-900">
+                <p className="font-medium mb-1">
                     {selectedModel === "logistic"
                         ? "Logistic Regression"
-                        : "Random Forest"}
-                </strong>
-            </p>
+                        : "Random Forest"}{" "}
+                    Model
+                </p>
+                <p className="mb-2">{modelInfo[selectedModel].description}</p>
+                <div className="grid grid-cols-3 gap-4 text-xs">
+                    <div>
+                        <span className="font-semibold">Accuracy:</span>{" "}
+                        {modelInfo[selectedModel].accuracy}
+                    </div>
+                    <div>
+                        <span className="font-semibold">Precision:</span>{" "}
+                        {modelInfo[selectedModel].precision}
+                    </div>
+                    <div>
+                        <span className="font-semibold">Recall:</span>{" "}
+                        {modelInfo[selectedModel].recall}
+                    </div>
+                </div>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -157,7 +190,7 @@ export default function ChurnPrediction() {
     );
 }
 
-// Reusable components
+// Reusable input and select components
 function Input({ name, label, value, onChange }) {
     return (
         <div>
