@@ -1,0 +1,257 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark mode styles */
+.dark {
+  @apply bg-gray-900 text-gray-50;
+}
+
+/* Navigation and Header */
+.dark .bg-blue-600 {
+  @apply bg-gray-800;
+}
+
+.dark .hover\:bg-blue-700:hover {
+  @apply hover:bg-gray-700;
+}
+
+/* Cards and Containers */
+.dark .bg-white {
+  @apply bg-gray-800;
+}
+
+.dark .bg-gray-50 {
+  @apply bg-gray-700;
+}
+
+.dark .shadow-md {
+  @apply shadow-gray-900/50;
+}
+
+/* Text Colors */
+.dark .text-gray-500 {
+  @apply text-gray-300;
+}
+
+.dark .text-gray-700 {
+  @apply text-gray-200;
+}
+
+.dark .text-gray-900 {
+  @apply text-gray-50;
+}
+
+.dark .text-blue-700 {
+  @apply text-blue-300;
+}
+
+/* Buttons and Interactive Elements */
+.dark .bg-gray-100 {
+  @apply bg-gray-700;
+}
+
+.dark .hover\:bg-gray-200:hover {
+  @apply hover:bg-gray-600;
+}
+
+.dark .bg-blue-600 {
+  @apply bg-blue-500;
+}
+
+.dark .hover\:bg-blue-700:hover {
+  @apply hover:bg-blue-600;
+}
+
+/* Form Elements */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark select,
+.dark textarea {
+  @apply bg-gray-700 border-gray-600 text-gray-50;
+}
+
+.dark input[type="text"]:focus,
+.dark input[type="email"]:focus,
+.dark input[type="password"]:focus,
+.dark input[type="number"]:focus,
+.dark select:focus,
+.dark textarea:focus {
+  @apply border-blue-400 ring-blue-400;
+}
+
+/* Toggle Switches */
+.dark .peer:checked ~ .peer-checked\:bg-blue-600 {
+  @apply bg-blue-400;
+}
+
+.dark .peer:focus ~ .peer-focus\:ring-blue-300 {
+  @apply ring-blue-400;
+}
+
+/* Links */
+.dark a {
+  @apply text-blue-300;
+}
+
+.dark a:hover {
+  @apply text-blue-200;
+}
+
+/* Dividers and Borders */
+.dark .border-gray-300 {
+  @apply border-gray-600;
+}
+
+.dark .border-gray-200 {
+  @apply border-gray-700;
+}
+
+/* Success and Error Messages */
+.dark .text-green-600 {
+  @apply text-green-300;
+}
+
+.dark .text-red-600 {
+  @apply text-red-300;
+}
+
+/* Placeholder Text */
+.dark ::placeholder {
+  @apply text-gray-400;
+}
+
+/* Charts and Graphs */
+.dark .recharts-default-tooltip {
+  @apply bg-gray-800 border-gray-700 text-gray-50;
+}
+
+.dark .recharts-tooltip-cursor {
+  @apply fill-gray-700;
+}
+
+/* Table Styles */
+.dark .bg-gray-50 {
+  @apply bg-gray-700;
+}
+
+.dark .divide-gray-200 {
+  @apply divide-gray-700;
+}
+
+/* Status Badges */
+.dark .bg-green-100 {
+  @apply bg-green-900/40;
+}
+
+.dark .bg-yellow-100 {
+  @apply bg-yellow-900/40;
+}
+
+.dark .bg-red-100 {
+  @apply bg-red-900/40;
+}
+
+.dark .text-green-800 {
+  @apply text-green-300;
+}
+
+.dark .text-yellow-800 {
+  @apply text-yellow-300;
+}
+
+.dark .text-red-800 {
+  @apply text-red-300;
+}
+
+/* Info Boxes */
+.dark .bg-blue-50 {
+  @apply bg-blue-900/40;
+}
+
+.dark .text-blue-800 {
+  @apply text-blue-300;
+}
+
+/* Loading Spinner */
+.dark .border-blue-500 {
+  @apply border-blue-300;
+}
+
+/* Model Selection Buttons */
+.dark .border-l.border-gray-300 {
+  @apply border-gray-600;
+}
+
+/* Chart Grid Lines */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  @apply stroke-gray-700;
+}
+
+/* Chart Axes */
+.dark .recharts-xAxis .recharts-cartesian-axis-tick-value,
+.dark .recharts-yAxis .recharts-cartesian-axis-tick-value {
+  @apply fill-gray-200;
+}
+
+/* Chart Tooltips */
+.dark .recharts-tooltip-label {
+  @apply text-gray-50;
+}
+
+/* Chart Legend */
+.dark .recharts-legend-item-text {
+  @apply text-gray-200;
+}
+
+/* Additional Text Enhancements */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  @apply text-gray-50;
+}
+
+.dark p {
+  @apply text-gray-200;
+}
+
+.dark .text-sm {
+  @apply text-gray-200;
+}
+
+.dark .text-xs {
+  @apply text-gray-300;
+}
+
+/* Form Labels */
+.dark label {
+  @apply text-gray-200;
+}
+
+/* Table Headers */
+.dark th {
+  @apply text-gray-200;
+}
+
+/* Table Cells */
+.dark td {
+  @apply text-gray-200;
+}
+
+/* Description Text */
+.dark .text-gray-600 {
+  @apply text-gray-300;
+}
+
+/* Metric Values */
+.dark .text-3xl {
+  @apply text-gray-50;
+}
+
+/* Subtle Text */
+.dark .text-gray-400 {
+  @apply text-gray-300;
+}
