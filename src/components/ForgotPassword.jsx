@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
+import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -29,28 +30,18 @@ const ForgotPassword = () => {
 
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Check if email exists in our system
-      const validEmails = ["admin@example.com", "user@example.com"];
-      if (validEmails.includes(email)) {
-        setStatus({
-          type: 'success',
-          message: 'Password reset instructions have been sent to your email.'
-        });
-        setEmail('');
-      } else {
-        setStatus({
-          type: 'error',
-          message: 'No account found with this email address.'
-        });
-      }
-    } catch (error) {
+      const auth = getAuth();
+      await sendPasswordResetEmail(auth, email.trim());
       setStatus({
-        type: 'error',
-        message: 'An error occurred. Please try again later.'
+        type: 'success',
+        message: 'Password reset email sent. Please check your inbox.',
       });
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        setStatus({ type: 'error', message: 'No account found with this email.' });
+      } else {
+        setStatus({ type: 'error', message: error.message });
+      }
     } finally {
       setLoading(false);
     }
@@ -61,24 +52,22 @@ const ForgotPassword = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className={`mt-6 text-center text-3xl font-extrabold ${settings.darkMode ? 'text-white' : 'text-gray-900'}`}>
-            Reset your password
+            Send Password Reset Link
           </h2>
           <p className={`mt-2 text-center text-sm ${settings.darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            Enter your email address and we'll send you instructions to reset your password.
+            Enter your email to receive a reset link.
           </p>
         </div>
-
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {status.message && (
             <div className={`rounded-md p-4 ${
-              status.type === 'error' 
-                ? 'bg-red-100 border border-red-400 text-red-700' 
+              status.type === 'error'
+                ? 'bg-red-100 border border-red-400 text-red-700'
                 : 'bg-green-100 border border-green-400 text-green-700'
             }`} role="alert">
               <span className="block sm:inline">{status.message}</span>
             </div>
           )}
-
           <div>
             <label htmlFor="email" className="sr-only">Email address</label>
             <input
@@ -95,7 +84,6 @@ const ForgotPassword = () => {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-
           <div>
             <button
               type="submit"
@@ -113,11 +101,10 @@ const ForgotPassword = () => {
                   Sending...
                 </span>
               ) : (
-                'Send Reset Instructions'
+                'Send Reset Link'
               )}
             </button>
           </div>
-
           <div className="text-center">
             <Link 
               to="/login" 
@@ -132,4 +119,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword; 
+export default ForgotPassword;

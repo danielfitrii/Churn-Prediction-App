@@ -96,10 +96,14 @@ const Sidebar = () => {
         <div className={`p-4 ${settings.darkMode ? 'border-gray-700' : 'border-gray-200'} border-t`}>
           <Link
             to="/profile/edit"
-            className={`flex items-center space-x-3 group ${
-              settings.darkMode
-                ? 'text-gray-300 hover:text-white'
-                : 'text-gray-600 hover:text-gray-900'
+            className={`flex items-center space-x-3 group transition-colors rounded-lg px-2 py-2 ${
+              location.pathname === '/profile/edit'
+                ? settings.darkMode
+                  ? 'bg-gray-700 text-white'
+                  : 'bg-gray-50 text-blue-600'
+                : settings.darkMode
+                  ? 'text-gray-300 hover:text-white'
+                  : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             <div className="flex-shrink-0">

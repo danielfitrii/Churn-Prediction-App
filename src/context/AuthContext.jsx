@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { loginUser } from '../firebaseHelpers';
 
 const AuthContext = createContext(null);
 
@@ -47,25 +48,9 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     setError(null);
-    
     try {
-      // Simulated API call with delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const validUsers = [
-        { email: "admin@example.com", password: "Admin123", role: "admin" },
-        { email: "user@example.com", password: "User123456", role: "user" },
-      ];
-
-      const foundUser = validUsers.find(
-        (u) => u.email === email && u.password === password
-      );
-
-      if (foundUser) {
-        const userData = {
-          ...foundUser,
-          lastLogin: new Date().toISOString(),
-        };
+      const userData = await loginUser(email, password);
+      if (userData) {
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("userTimestamp", new Date().getTime().toString());

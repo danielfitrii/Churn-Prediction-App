@@ -7,11 +7,13 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Settings from './components/Settings';
 import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
 import EditProfile from './components/EditProfile';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import { registerUser } from './firebaseHelpers';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -21,10 +23,26 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+function FirestoreTestButton() {
+  const handleTest = async () => {
+    try {
+      const userId = await registerUser('testuser@example.com', 'testpassword123');
+      alert('User created with ID: ' + userId);
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+  return (
+    <button onClick={handleTest} style={{marginBottom: 16, padding: '8px 16px', background: '#2563eb', color: 'white', borderRadius: 6}}>
+      Test Firestore Register
+    </button>
+  );
+}
+
 const Layout = () => {
   const location = useLocation();
   const { user } = useAuth();
-  const isAuthPage = location.pathname === "/login" || location.pathname === "/register" || location.pathname === "/forgot-password";
+  const isAuthPage = location.pathname === "/login" || location.pathname === "/register" || location.pathname === "/forgot-password" || location.pathname === "/reset-password";
 
   if (isAuthPage) {
     return (
@@ -33,6 +51,7 @@ const Layout = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </main>
     );
@@ -44,6 +63,8 @@ const Layout = () => {
       <Header />
       <main className="pt-16 transition-all duration-300 ease-in-out">
         <div className="p-6">
+          {/* Firestore test button for development only */}
+          <FirestoreTestButton />
           <Routes>
             <Route
               path="/"
