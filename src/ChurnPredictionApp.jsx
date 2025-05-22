@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export default function ChurnPredictionApp() {
   const [formData, setFormData] = useState({
@@ -19,18 +19,27 @@ export default function ChurnPredictionApp() {
   const [loading, setLoading] = useState(false);
   const [modelInfo, setModelInfo] = useState({
     logistic: {
-      accuracy: "82.4%",
-      precision: "79.1%",
-      recall: "73.8%",
-      description: "Simple, fast, and provides probability estimates. Good for understanding feature importance."
+      description: `This model provides a more balanced approach, aiming to reduce false alarms (higher precision) while still identifying most churners. It's slightly more conservative, meaning fewer non-churners will be flagged unnecessarily, but there's a slightly higher chance of missing some churners.\n\nWhen to choose:\n- When the cost of false alarms is a concern (e.g., limited retention resources).`,
+      tip: 'Tip: For this model, Contract Type and Tenure most affect predictions.'
     },
     randomForest: {
-      accuracy: "87.2%",
-      precision: "84.5%",
-      recall: "79.3%",
-      description: "Ensemble method with higher accuracy. Better handles non-linear relationships and feature interactions."
+      description: `This model prioritizes catching as many potential churners as possible (high recall). It's designed to minimize the risk of missing a customer who is likely to leave. It may recommend actions for some customers who are not at risk (lower precision), but it ensures that few churners are overlooked.\n\nWhen to choose:\n- When the cost of missing a churner is high.\n- When your team prefers proactive retention, even with some false alarms.`,
+      tip: 'Tip: For this model, Payment Method and Internet Service most affect predictions.'
     }
   });
+
+  const [customerInfo, setCustomerInfo] = useState({
+    customerID: '',
+    name: '',
+    gender: '',
+    age: ''
+  });
+
+  const [showMissingInfoWarning, setShowMissingInfoWarning] = useState(false);
+
+  const isCustomerInfoComplete = customerInfo.customerID && customerInfo.name && customerInfo.gender && customerInfo.age;
+
+  const warningRef = useRef(null);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -46,113 +55,184 @@ export default function ChurnPredictionApp() {
     setPrediction(null);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    
-    // Simulate API call with different algorithms
-    setTimeout(() => {
-      let churnScore = 0;
-      
-      // Base factors for both models
-      if (formData.contract === "Month-to-month") churnScore += 30;
-      else if (formData.contract === "One year") churnScore += 15;
-      
-      if (formData.paymentMethod === "Electronic check") churnScore += 20;
-      if (formData.internetService === "Fiber optic") churnScore += 15;
-      if (formData.onlineSecurity === "No") churnScore += 10;
-      if (formData.techSupport === "No") churnScore += 10;
-      
-      churnScore -= Math.min(formData.tenure / 2, 20);
-      
-      if (formData.monthlyCharges > 80) churnScore += 15;
-      
-      // Model-specific adjustments to simulate different algorithms
-      if (selectedModel === "logistic") {
-        // Logistic regression tends to be more linear in how it weighs features
-        churnScore = churnScore * 0.95;
-        // Add some randomness within a reasonable range
-        churnScore += (Math.random() * 6) - 3;
-      } else {
-        // Random Forest can capture more complex relationships
-        if (formData.tenure < 6 && formData.contract === "Month-to-month") {
-          churnScore += 10; // Interaction effect
-        }
-        if (formData.monthlyCharges > 90 && formData.internetService === "Fiber optic") {
-          churnScore += 8; // Another interaction effect
-        }
-        // Random Forest tends to be more confident at extremes
-        if (churnScore > 50) churnScore *= 1.1;
-        if (churnScore < 20) churnScore *= 0.9;
-        // Add some different randomness
-        churnScore += (Math.random() * 8) - 4;
-      }
-      
-      // Normalize to percentage (0-100%)
-      const normalizedScore = Math.max(0, Math.min(100, churnScore));
-      
-      setPrediction({
-        churnProbability: normalizedScore.toFixed(1),
-        riskLevel: normalizedScore < 30 ? "Low" : normalizedScore < 70 ? "Medium" : "High",
-        model: selectedModel === "logistic" ? "Logistic Regression" : "Random Forest"
-      });
+    setShowMissingInfoWarning(false);
+    if (!isCustomerInfoComplete) {
+      setShowMissingInfoWarning(true);
       setLoading(false);
-    }, 800);
+      setTimeout(() => {
+        if (warningRef.current) {
+          warningRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 50);
+      return;
+    }
+    setLoading(true);
+    setPrediction(null);
+    try {
+      // Encode features to match model's one-hot encoding
+      const encodedFeatures = [
+        Number(formData.tenure),
+        Number(formData.monthlyCharges),
+        Number(formData.totalCharges),
+        // Contract
+        formData.contract === "One year" ? 1 : 0,
+        formData.contract === "Two year" ? 1 : 0,
+        // Payment Method
+        formData.paymentMethod === "Credit card (automatic)" ? 1 : 0,
+        formData.paymentMethod === "Electronic check" ? 1 : 0,
+        formData.paymentMethod === "Mailed check" ? 1 : 0,
+        // Internet Service
+        formData.internetService === "Fiber optic" ? 1 : 0,
+        formData.internetService === "No" ? 1 : 0,
+        // Yes/No features
+        formData.onlineSecurity === "Yes" ? 1 : 0,
+        formData.techSupport === "Yes" ? 1 : 0,
+        formData.streamingTV === "Yes" ? 1 : 0,
+        formData.paperlessBilling === "Yes" ? 1 : 0
+      ];
+      console.log('Encoded features:', encodedFeatures, 'Length:', encodedFeatures.length);
+      const result = await makePrediction(encodedFeatures, selectedModel);
+      setPrediction({
+        churnProbability: (result.probability * 100).toFixed(1),
+        riskLevel: result.probability < 0.3 ? 'Low' : result.probability < 0.7 ? 'Medium' : 'High',
+        model: selectedModel === 'logistic' ? 'Logistic Regression' : 'Random Forest'
+      });
+    } catch (error) {
+      setPrediction({
+        churnProbability: 'Error',
+        riskLevel: 'Error',
+        model: 'Error'
+      });
+    }
+    setLoading(false);
+  };
+
+  const makePrediction = async (features, model) => {
+    try {
+      const response = await fetch('http://localhost:5000/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ features, model }),
+      });
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      return {
+        prediction: data.prediction,
+        probability: data.probability
+      };
+    } catch (error) {
+      console.error('Error making prediction:', error);
+      throw error;
+    }
+  };
+
+  const handleCustomerInfoChange = (e) => {
+    const { name, value } = e.target;
+    setCustomerInfo({ ...customerInfo, [name]: value });
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <h1 className="text-3xl font-bold text-blue-700 mb-6">Customer Churn Prediction</h1>
-      
+      <h1 className="text-3xl font-bold text-blue-700 mb-6 text-center">Customer Churn Prediction</h1>
+      <div className="mb-6 p-4 bg-blue-50 rounded-lg shadow flex flex-col items-center justify-center">
+        <form className="flex flex-col md:flex-row md:space-x-4 items-center w-full justify-center">
+          <div className="mb-2 md:mb-0 w-32">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Customer ID</label>
+            <input
+              type="text"
+              name="customerID"
+              value={customerInfo.customerID}
+              onChange={handleCustomerInfoChange}
+              className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border text-center bg-white"
+            />
+          </div>
+          <div className="mb-2 md:mb-0 w-48">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input
+              type="text"
+              name="name"
+              value={customerInfo.name}
+              onChange={handleCustomerInfoChange}
+              className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border text-center bg-white"
+            />
+          </div>
+          <div className="mb-2 md:mb-0 w-40">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+            <select
+              name="gender"
+              value={customerInfo.gender}
+              onChange={handleCustomerInfoChange}
+              className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border text-center bg-white"
+            >
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+          <div className="w-32">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+            <input
+              type="number"
+              name="age"
+              value={customerInfo.age}
+              onChange={handleCustomerInfoChange}
+              className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border text-center bg-white"
+              min="0"
+            />
+          </div>
+        </form>
+      </div>
+      {showMissingInfoWarning && (
+        <div ref={warningRef} className="mb-4 text-red-600 font-medium text-center">
+          Please fill in all customer basic information before predicting.
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 bg-gray-50 p-6 rounded-lg">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-800">Customer Data</h2>
-            
+
             <div className="flex bg-white rounded-md shadow-sm border border-gray-300 overflow-hidden">
               <button
                 type="button"
-                className={`px-4 py-2 text-sm font-medium ${
-                  selectedModel === "logistic" 
-                    ? "bg-blue-600 text-white" 
-                    : "bg-white text-gray-700 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-2 text-sm font-medium ${selectedModel === "logistic"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
                 onClick={() => handleModelChange("logistic")}
               >
                 Logistic Regression
               </button>
               <button
                 type="button"
-                className={`px-4 py-2 text-sm font-medium border-l border-gray-300 ${
-                  selectedModel === "randomForest" 
-                    ? "bg-blue-600 text-white" 
-                    : "bg-white text-gray-700 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-2 text-sm font-medium border-l border-gray-300 ${selectedModel === "randomForest"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
                 onClick={() => handleModelChange("randomForest")}
               >
                 Random Forest
               </button>
             </div>
           </div>
-          
+
           <div className="bg-blue-50 p-3 rounded mb-4 text-sm text-blue-800">
             <div className="font-medium mb-1">
               {selectedModel === "logistic" ? "Logistic Regression" : "Random Forest"} Model
             </div>
-            <p>{modelInfo[selectedModel].description}</p>
-            <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-              <div>
-                <span className="font-medium">Accuracy:</span> {modelInfo[selectedModel].accuracy}
-              </div>
-              <div>
-                <span className="font-medium">Precision:</span> {modelInfo[selectedModel].precision}
-              </div>
-              <div>
-                <span className="font-medium">Recall:</span> {modelInfo[selectedModel].recall}
-              </div>
-            </div>
+            <pre className="whitespace-pre-wrap font-sans text-blue-800 mb-2" style={{ background: 'transparent', border: 'none', padding: 0 }}>{modelInfo[selectedModel].description}</pre>
           </div>
-          
+
+          <div className="bg-yellow-50 p-2 rounded text-xs text-yellow-800 mb-4 text-center">
+            {modelInfo[selectedModel].tip}
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -168,7 +248,7 @@ export default function ChurnPredictionApp() {
                   min="0"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Monthly Charges ($)
@@ -182,7 +262,7 @@ export default function ChurnPredictionApp() {
                   min="0"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Total Charges ($)
@@ -196,7 +276,7 @@ export default function ChurnPredictionApp() {
                   min="0"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Contract Type
@@ -212,7 +292,7 @@ export default function ChurnPredictionApp() {
                   <option value="Two year">Two year</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Payment Method
@@ -225,11 +305,11 @@ export default function ChurnPredictionApp() {
                 >
                   <option value="Electronic check">Electronic check</option>
                   <option value="Mailed check">Mailed check</option>
-                  <option value="Bank transfer">Bank transfer</option>
-                  <option value="Credit card">Credit card</option>
+                  <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
+                  <option value="Credit card (automatic)">Credit card (automatic)</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Internet Service
@@ -245,7 +325,7 @@ export default function ChurnPredictionApp() {
                   <option value="No">No</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Online Security
@@ -260,7 +340,7 @@ export default function ChurnPredictionApp() {
                   <option value="No">No</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Tech Support
@@ -275,7 +355,7 @@ export default function ChurnPredictionApp() {
                   <option value="No">No</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Streaming TV
@@ -290,7 +370,7 @@ export default function ChurnPredictionApp() {
                   <option value="No">No</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Paperless Billing
@@ -306,7 +386,7 @@ export default function ChurnPredictionApp() {
                 </select>
               </div>
             </div>
-            
+
             <div className="mt-6">
               <button
                 type="submit"
@@ -318,33 +398,32 @@ export default function ChurnPredictionApp() {
             </div>
           </form>
         </div>
-        
+
         <div className="bg-gray-50 p-6 rounded-lg">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Prediction Result</h2>
-          
+
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           ) : prediction ? (
             <div className="h-64 flex flex-col items-center justify-center">
-              <div className={`text-6xl font-bold mb-2 ${
-                prediction.riskLevel === "Low" 
-                  ? "text-green-500" 
-                  : prediction.riskLevel === "Medium" 
-                    ? "text-yellow-500" 
-                    : "text-red-500"
-              }`}>
+              <div className={`text-6xl font-bold mb-2 ${prediction.riskLevel === "Low"
+                ? "text-green-500"
+                : prediction.riskLevel === "Medium"
+                  ? "text-yellow-500"
+                  : "text-red-500"
+                }`}>
                 {prediction.churnProbability}%
               </div>
               <div className="text-xl font-medium text-gray-700">
                 {prediction.riskLevel} Risk
               </div>
-              
+
               <div className="mt-2 text-sm text-blue-600 font-medium">
                 {prediction.model}
               </div>
-              
+
               <div className="mt-4 text-sm text-gray-600 text-center">
                 {prediction.riskLevel === "Low" ? (
                   <p>This customer has a low probability of churning. Continue providing good service.</p>
@@ -360,7 +439,7 @@ export default function ChurnPredictionApp() {
               <p>Enter customer data and click "Predict Churn Risk" to see the prediction</p>
             </div>
           )}
-          
+
           {prediction && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <h3 className="font-medium text-gray-700 mb-2">Key Churn Factors:</h3>
@@ -391,7 +470,7 @@ export default function ChurnPredictionApp() {
           )}
         </div>
       </div>
-      
+
       <div className="mt-8 bg-blue-50 p-4 rounded-lg text-sm text-gray-700">
         <p><strong>Note:</strong> This is a demonstration model simulating different ML algorithms. In a production environment, these buttons would connect to separate trained models via API endpoints.</p>
       </div>

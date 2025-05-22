@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     BarChart,
     Bar,
@@ -9,45 +9,159 @@ import {
     ResponsiveContainer,
     Cell,
 } from "recharts";
+import shapSummary from './assets/LogisticRegression_SHAP.png';
+import Plot from "react-plotly.js";
+
+// Cache for storing processed data
+const dataCache = {
+    "Logistic Regression": null,
+    "Random Forest": null
+};
+
+const modelJsonFiles = {
+    "Logistic Regression": {
+        shap: "/shap_values_lr.json",
+        features: "/feature_names_lr.json",
+        values: "/feature_values_lr.json"
+    },
+    "Random Forest": {
+        shap: "/shap_values_rf.json",
+        features: "/feature_names_rf.json",
+        values: "/feature_values_rf.json"
+    }
+};
+
+// Function to sample data
+const sampleData = (data, sampleSize = 1000) => {
+    if (data.length <= sampleSize) return data;
+    const step = Math.floor(data.length / sampleSize);
+    return data.filter((_, index) => index % step === 0);
+};
+
+// Function to process and cache data
+const processModelData = async (modelName) => {
+    if (dataCache[modelName]) {
+        return dataCache[modelName];
+    }
+
+    const { shap, features, values } = modelJsonFiles[modelName];
+    
+    try {
+        const [shapData, featureData, valuesData] = await Promise.all([
+            fetch(shap).then(res => res.json()),
+            fetch(features).then(res => res.json()),
+            fetch(values).then(res => res.json())
+        ]);
+
+        // Sample the data
+        const sampledShapData = sampleData(shapData);
+        const sampledValuesData = sampleData(valuesData);
+
+        const featureImportance = featureData.map(feature => {
+            const absShapValues = sampledShapData.map(sample => Math.abs(sample[feature]));
+            const meanAbsShap = absShapValues.reduce((sum, val) => sum + val, 0) / absShapValues.length;
+            return { feature, meanAbsShap };
+        });
+
+        featureImportance.sort((a, b) => b.meanAbsShap - a.meanAbsShap);
+        const sortedFeatureNames = featureImportance.map(item => item.feature);
+
+        const processedData = {
+            shapValues: sampledShapData,
+            featureNames: featureData,
+            featureValues: sampledValuesData,
+            sortedFeatureNames
+        };
+
+        // Cache the processed data
+        dataCache[modelName] = processedData;
+        return processedData;
+    } catch (error) {
+        console.error(`Error loading data for ${modelName}:`, error);
+        throw error;
+    }
+};
 
 export default function ModelExplanation() {
     const [loading, setLoading] = useState(true);
     const [selectedModel, setSelectedModel] = useState("Logistic Regression");
+    const [shapValues, setShapValues] = useState([]);
+    const [featureNames, setFeatureNames] = useState([]);
+    const [featureValues, setFeatureValues] = useState([]);
+    const [sortedFeatureNames, setSortedFeatureNames] = useState([]);
+    const [error, setError] = useState(null);
+    
+    // Create a ref for the worker
+    const workerRef = useRef(null);
 
-    const logisticFeatures = [
-        { feature: "Tenure", importance: 24 },
-        { feature: "Monthly Charges", importance: 20 },
-        { feature: "Contract Type", importance: 18 },
-        { feature: "Online Security", importance: 12 },
-        { feature: "Tech Support", importance: 10 },
-        { feature: "Paperless Billing", importance: 7 },
-        { feature: "Internet Service", importance: 5 },
-        { feature: "Payment Method", importance: 4 },
-    ];
+    // Initialize worker
+    useEffect(() => {
+        console.log('Initializing Web Worker...');
+        workerRef.current = new Worker(new URL('./workers/modelDataWorker.js', import.meta.url));
+        
+        // Cleanup worker on component unmount
+        return () => {
+            console.log('Terminating Web Worker...');
+            workerRef.current?.terminate();
+        };
+    }, []);
 
-    const forestFeatures = [
-        { feature: "Contract Type", importance: 25 },
-        { feature: "Payment Method", importance: 20 },
-        { feature: "Internet Service", importance: 18 },
-        { feature: "Tenure", importance: 15 },
-        { feature: "Monthly Charges", importance: 12 },
-        { feature: "Total Charges", importance: 10 },
-        { feature: "Online Security", importance: 8 },
-        { feature: "Tech Support", importance: 7 },
-    ];
+    // Load model data using Web Worker
+    const loadModelData = useCallback(async (modelName) => {
+        console.log(`Loading data for model: ${modelName}`);
+        setLoading(true);
+        setError(null);
 
-    const logisticMetrics = {
-        accuracy: "82.4%",
-        precision: "79.1%",
-        recall: "73.8%",
-        f1: "76.3%",
-    };
+        // Check cache first
+        if (dataCache[modelName]) {
+            console.log('Using cached data');
+            const cachedData = dataCache[modelName];
+            setShapValues(cachedData.shapValues);
+            setFeatureNames(cachedData.featureNames);
+            setFeatureValues(cachedData.featureValues);
+            setSortedFeatureNames(cachedData.sortedFeatureNames);
+            setLoading(false);
+            return;
+        }
 
-    const forestMetrics = {
-        accuracy: "85.0%",
-        precision: "80.0%",
-        recall: "75.0%",
-        f1: "77.0%",
+        console.log('Fetching new data from worker...');
+        // Set up worker message handler
+        workerRef.current.onmessage = (e) => {
+            const { type, modelName: workerModelName, data, error: workerError } = e.data;
+            
+            if (type === 'success') {
+                console.log('Worker processing completed successfully');
+                // Cache the processed data
+                dataCache[workerModelName] = data;
+                
+                // Update state with processed data
+                setShapValues(data.shapValues);
+                setFeatureNames(data.featureNames);
+                setFeatureValues(data.featureValues);
+                setSortedFeatureNames(data.sortedFeatureNames);
+                setLoading(false);
+            } else {
+                console.error('Worker error:', workerError);
+                setError(workerError || "Failed to load model data");
+                setLoading(false);
+            }
+        };
+
+        // Send data to worker for processing
+        workerRef.current.postMessage({
+            modelName,
+            urls: modelJsonFiles[modelName]
+        });
+    }, []);
+
+    // Initial load
+    useEffect(() => {
+        loadModelData(selectedModel);
+    }, [selectedModel, loadModelData]);
+
+    // Handle model change
+    const handleModelChange = (modelName) => {
+        setSelectedModel(modelName);
     };
 
     const modelData = {
@@ -56,27 +170,48 @@ export default function ModelExplanation() {
             description:
                 "Simple, fast, and interpretable model that estimates churn probability using weighted linear combinations of input features.",
             type: "Classification",
-            pipeline: "Preprocessing → Logistic Regression → Churn Probability",
-            features: logisticFeatures,
-            metrics: logisticMetrics,
+            pipeline: "Preprocessing → RFE → Tomek Links → Logistic Regression → Threshold Tuning",
+            features: [
+                { feature: "tenure", importance: 24 },
+                { feature: "Total Charges", importance: 21 },
+                { feature: "Internet Service", importance: 20 },
+                { feature: "Contract Type", importance: 19 },
+                { feature: "Online Security", importance: 12 },
+                { feature: "Tech Support", importance: 10 },
+                { feature: "Streaming TV", importance: 8 },
+                { feature: "Paperless Billing", importance: 6 }
+            ],
+            metrics: {
+                accuracy: "78.0%",
+                precision: "56.0%",
+                recall: "74.0%",
+                f1: "64.0%"
+            },
         },
         "Random Forest": {
             name: "Random Forest",
             description:
                 "Ensemble of decision trees that captures complex patterns in customer behavior for churn prediction.",
             type: "Classification",
-            pipeline: "Preprocessing → Random Forest → Churn Probability",
-            features: forestFeatures,
-            metrics: forestMetrics,
+            pipeline: "Preprocessing → RFE → ADASYN → Random Forest → Threshold Tuning",
+            features: [
+                { feature: "Total Charges", importance: 21 },
+                { feature: "Monthly Charges", importance: 19 },
+                { feature: "Tenure", importance: 17 },
+                { feature: "Payment Method", importance: 13 },
+                { feature: "Internet Service", importance: 11 },
+                { feature: "Paperless Billing", importance: 9 },
+                { feature: "Contract Type", importance: 8 },
+                { feature: "Streaming TV", importance: 6 }
+            ],
+            metrics: {
+                accuracy: "76.0%",
+                precision: "55.0%",
+                recall: "62.0%",
+                f1: "58.0%"
+            },
         },
     };
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 800);
-        return () => clearTimeout(timer);
-    }, []);
 
     const model = modelData[selectedModel];
 
@@ -88,6 +223,23 @@ export default function ModelExplanation() {
         );
     }
 
+    if (error) {
+        return (
+            <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+                <div className="text-red-500 text-center">
+                    <p className="text-xl font-semibold mb-2">Error</p>
+                    <p>{error}</p>
+                    <button 
+                        onClick={() => loadModelData(selectedModel)}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
             {/* Tabs */}
@@ -95,11 +247,12 @@ export default function ModelExplanation() {
                 {Object.keys(modelData).map((modelName) => (
                     <button
                         key={modelName}
-                        className={`px-4 py-2 rounded-md ${selectedModel === modelName
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 text-gray-700"
-                            }`}
-                        onClick={() => setSelectedModel(modelName)}
+                        className={`px-4 py-2 rounded-md ${
+                            selectedModel === modelName
+                                ? "bg-blue-600 text-white"
+                                : "bg-gray-200 text-gray-700"
+                        }`}
+                        onClick={() => handleModelChange(modelName)}
                     >
                         {modelName}
                     </button>
@@ -164,7 +317,7 @@ export default function ModelExplanation() {
                 )}
 
                 <p className="text-gray-700 mt-2">
-                    These features have the highest impact on this model’s predictions.
+                    These features have the highest impact on this model's predictions.
                 </p>
             </section>
 
@@ -194,16 +347,78 @@ export default function ModelExplanation() {
 
             </section>
 
-            {/* SHAP Placeholder */}
+            {/* SHAP Violin Plot */}
             <section className="mb-6">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                    SHAP Explanation (Visual Example)
+                    SHAP Value Distribution (Violin Plot)
                 </h2>
-                <div className="border border-dashed border-gray-300 h-64 flex items-center justify-center">
-                    <p className="text-gray-500">
-                        SHAP waterfall plot for a sample customer goes here.
-                    </p>
-                </div>
+                {shapValues.length && featureNames.length && featureValues.length && sortedFeatureNames.length ? (
+                    <Plot
+                        data={sortedFeatureNames.map((feature, i) => ({
+                            type: "scatter",
+                            mode: "markers",
+                            x: shapValues.map(sample => sample[feature]),
+                            y: Array(shapValues.length).fill(feature),
+                            name: feature,
+                            marker: {
+                                color: featureValues.map(sample => sample[feature]),
+                                colorscale: 'RdBu',
+                                showscale: i === 0,
+                                colorbar: i === 0 ? {
+                                    title: 'Feature value',
+                                    thickness: 15,
+                                    x: 1.05,
+                                } : undefined,
+                                size: 4,
+                                opacity: 0.6,
+                                line: {
+                                    width: 0.2,
+                                    color: 'gray'
+                                }
+                            }
+                        }))}
+                        layout={{
+                            title: "SHAP Value Distribution per Feature",
+                            xaxis: { 
+                                title: "SHAP value (impact on model output)",
+                                autorange: true,
+                                fixedrange: true
+                            },
+                            yaxis: { 
+                                title: "Feature", 
+                                type: 'category', 
+                                autorange: 'reversed',
+                                fixedrange: true
+                            },
+                            margin: {
+                                l: Math.max(...sortedFeatureNames.map(f => f.length)) * 7.5,
+                                r: 120, 
+                                t: 40, 
+                                b: 40
+                            },
+                            height: 600,
+                            showlegend: false,
+                            hovermode: 'closest',
+                            dragmode: false,
+                            modebar: {
+                                remove: ['lasso2d', 'select2d', 'zoom2d', 'pan2d']
+                            }
+                        }}
+                        config={{ 
+                            responsive: true,
+                            displayModeBar: false,
+                            staticPlot: false,
+                            displaylogo: false,
+                            modeBarButtonsToRemove: ['lasso2d', 'select2d', 'zoom2d', 'pan2d'],
+                            scrollZoom: false
+                        }}
+                        style={{ width: "100%" }}
+                        useResizeHandler={true}
+                        frames={[]}
+                    />
+                ) : (
+                    <div>Loading SHAP violin plot...</div>
+                )}
             </section>
 
             {/* Caveats */}

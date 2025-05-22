@@ -2,7 +2,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useLocation, Link } from 'react-router-dom';
 
-const Header = () => {
+const Header = ({ isExpanded }) => {
   const { user } = useAuth();
   const { settings } = useSettings();
   const location = useLocation();
@@ -25,7 +25,9 @@ const Header = () => {
   };
 
   return (
-    <header className={`fixed top-0 right-0 left-20 h-16 ${settings.darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm z-40 transition-all duration-300`}>
+    <header className={`fixed top-0 right-0 transition-all duration-300 ease-in-out h-16 ${
+      settings.darkMode ? 'bg-gray-800' : 'bg-white'
+    } shadow-sm z-40`} style={{ left: isExpanded ? '16rem' : '5rem' }}>
       <div className="h-full px-4 flex items-center justify-between">
         <div className="flex items-center">
           <h1 className={`text-xl font-semibold ${settings.darkMode ? 'text-white' : 'text-gray-800'}`}>

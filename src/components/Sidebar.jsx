@@ -1,22 +1,11 @@
-import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 
-const Sidebar = () => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const Sidebar = ({ isExpanded, setIsExpanded }) => {
   const { user, logout } = useAuth();
   const { settings } = useSettings();
   const location = useLocation();
-
-  // Update main content margin when sidebar expands/collapses
-  useEffect(() => {
-    const mainContent = document.querySelector('main');
-    if (mainContent) {
-      mainContent.style.marginLeft = isExpanded ? '16rem' : '5rem';
-      mainContent.style.transition = 'margin-left 0.3s ease-in-out';
-    }
-  }, [isExpanded]);
 
   const menuItems = [
     { path: '/', label: 'Dashboard', icon: (
@@ -44,7 +33,7 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`fixed left-0 top-0 h-full transition-all duration-300 ease-in-out ${
+      className={`sidebar fixed left-0 top-0 h-full transition-all duration-300 ease-in-out ${
         isExpanded ? 'w-64' : 'w-20'
       } ${settings.darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg z-50`}
       onMouseEnter={() => setIsExpanded(true)}

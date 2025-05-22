@@ -14,6 +14,7 @@ import EditProfile from './components/EditProfile';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { registerUser } from './firebaseHelpers';
+import { useState, useEffect } from 'react';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -42,6 +43,8 @@ function FirestoreTestButton() {
 const Layout = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register" || location.pathname === "/forgot-password" || location.pathname === "/reset-password";
 
   if (isAuthPage) {
@@ -59,9 +62,9 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen">
-      <Sidebar />
-      <Header />
-      <main className="pt-16 transition-all duration-300 ease-in-out">
+      <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
+      <Header isExpanded={isSidebarExpanded} />
+      <main className="pt-16 transition-all duration-300 ease-in-out" style={{ marginLeft: isSidebarExpanded ? '16rem' : '5rem' }}>
         <div className="p-6">
           {/* Firestore test button for development only */}
           <FirestoreTestButton />
