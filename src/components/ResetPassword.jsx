@@ -12,8 +12,7 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [status, setStatus] = useState({ type: '', message: '' });
   const [loading, setLoading] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { settings } = useSettings();
 
   useEffect(() => {
@@ -25,6 +24,12 @@ const ResetPassword = () => {
     }
   }, [mode, oobCode]);
 
+  const validatePassword = (password) => {
+    // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+    return passwordRegex.test(password);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ type: '', message: '' });
@@ -33,12 +38,14 @@ const ResetPassword = () => {
       setStatus({ type: 'error', message: 'All fields are required.' });
       return;
     }
-    if (newPassword !== confirmPassword) {
-      setStatus({ type: 'error', message: 'Passwords do not match.' });
+
+    if (!validatePassword(newPassword)) {
+      setStatus({ type: 'error', message: 'Password must be at least 8 characters long and contain uppercase, lowercase, and numbers.' });
       return;
     }
-    if (newPassword.length < 8) {
-      setStatus({ type: 'error', message: 'Password must be at least 8 characters.' });
+
+    if (newPassword !== confirmPassword) {
+      setStatus({ type: 'error', message: 'Passwords do not match.' });
       return;
     }
 
@@ -83,7 +90,7 @@ const ResetPassword = () => {
           </div>
         )}
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="rounded-md shadow-sm space-y-4">
             <div>
               <label htmlFor="email" className="sr-only">Email address</label>
               <input
@@ -91,26 +98,26 @@ const ResetPassword = () => {
                 type="email"
                 value={email}
                 disabled
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-gray-400' : 'border-gray-300 bg-gray-100 text-gray-500'} rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-gray-400' : 'border-gray-300 bg-gray-100 text-gray-500'} focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
               />
             </div>
             <div className="relative">
               <label htmlFor="new-password" className="sr-only">New password</label>
               <input
                 id="new-password"
-                type={showNewPassword ? "text" : "password"}
+                type={showPassword ? "text" : "password"}
                 placeholder="New password"
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'} placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'} placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                 required
               />
               <button
                 type="button"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => setShowNewPassword(!showNewPassword)}
+                onClick={() => setShowPassword(!showPassword)}
               >
-                {showNewPassword ? (
+                {showPassword ? (
                   <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                   </svg>
@@ -123,22 +130,22 @@ const ResetPassword = () => {
               </button>
             </div>
             <div className="relative">
-              <label htmlFor="confirm-password" className="sr-only">Confirm new password</label>
+              <label htmlFor="confirm-password" className="sr-only">Confirm password</label>
               <input
                 id="confirm-password"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm new password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Confirm password"
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'} placeholder-gray-500 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'} placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                 required
               />
               <button
                 type="button"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                onClick={() => setShowPassword(!showPassword)}
               >
-                {showConfirmPassword ? (
+                {showPassword ? (
                   <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                   </svg>

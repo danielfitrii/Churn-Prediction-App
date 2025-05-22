@@ -63,10 +63,18 @@ const Login = () => {
       if (success) {
         navigate('/');
       } else {
-        setError('Invalid email or password. Please try again.');
+        // Since we've already validated the password format, if login fails,
+        // it means either the email or password is incorrect
+        setError('Please check both your email and password. One or both may be incorrect.');
       }
     } catch (err) {
-      setError('An error occurred during login. Please try again.');
+      if (err.code === 'auth/wrong-password') {
+        setError('The password you entered is incorrect. Please try again.');
+      } else if (err.code === 'auth/user-not-found') {
+        setError('No account found with this email address. Please check your email or create a new account.');
+      } else {
+        setError('An error occurred during login. Please try again.');
+      }
       console.error('Login error:', err);
     }
   };
@@ -91,7 +99,7 @@ const Login = () => {
               <span className="block sm:inline">{error}</span>
             </div>
           )}
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="rounded-md shadow-sm space-y-4">
             <div>
               <label htmlFor="email" className="sr-only">Email address</label>
               <input
@@ -100,8 +108,7 @@ const Login = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
-                  } placeholder-gray-500 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'} placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -115,8 +122,7 @@ const Login = () => {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 required
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'
-                  } placeholder-gray-500 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'} placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

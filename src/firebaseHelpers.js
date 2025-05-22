@@ -6,7 +6,7 @@ const db = getFirestore(firebaseApp);
 const auth = getAuth(firebaseApp);
 
 // Register a new user with Firebase Auth and store profile in Firestore
-export async function registerUser(email, password, role = 'user') {
+export async function registerUser(email, password, role = 'user', userData = {}) {
   // Create user in Firebase Auth
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
@@ -14,6 +14,8 @@ export async function registerUser(email, password, role = 'user') {
   await setDoc(doc(db, 'users', user.uid), {
     email,
     role,
+    firstName: userData.firstName || '',
+    lastName: userData.lastName || '',
     createdAt: new Date().toISOString(),
   });
   return user.uid;
