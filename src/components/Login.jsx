@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import Logo from './Logo';
+import SettingsButtonWithModal from './SettingsButtonWithModal';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -12,6 +14,7 @@ const Login = () => {
   const { settings, updateSettings } = useSettings();
   const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const handleMouseDown = () => {
     setShowPassword(true);
@@ -89,6 +92,16 @@ const Login = () => {
 
   return (
     <div className={`min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 ${settings.darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      {/* Logo - Top Left */}
+      <div className="absolute top-4 left-4">
+        <Logo isDarkMode={settings.darkMode} />
+      </div>
+
+      {/* Settings Button - Top Right */}
+      <div className="absolute top-4 right-4">
+        <SettingsButtonWithModal />
+      </div>
+
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className={`mt-6 text-center text-3xl font-extrabold ${settings.darkMode ? 'text-white' : 'text-gray-900'}`}>

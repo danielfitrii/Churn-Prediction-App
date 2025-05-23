@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
 import { registerUser } from '../firebaseHelpers';
+import Logo from './Logo';
+import SettingsButtonWithModal from './SettingsButtonWithModal';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -78,6 +80,16 @@ const Register = () => {
 
   return (
     <div className={`min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 ${settings.darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      {/* Logo - Top Left */}
+      <div className="absolute top-4 left-4">
+        <Logo isDarkMode={settings.darkMode} />
+      </div>
+
+      {/* Settings Button - Top Right */}
+      <div className="absolute top-4 right-4">
+        <SettingsButtonWithModal />
+      </div>
+
       <div className="max-w-lg w-full space-y-8">
         <div>
           <h2 className={`mt-6 text-center text-3xl font-extrabold ${settings.darkMode ? 'text-white' : 'text-gray-900'}`}>
