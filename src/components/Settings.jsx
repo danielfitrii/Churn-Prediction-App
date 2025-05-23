@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { FiEdit2, FiSave, FiHelpCircle } from 'react-icons/fi';
+import { Tooltip } from 'react-tooltip';
 
 const Settings = () => {
-  const { user } = useAuth(); // Removed logout since it's unused now
+  const { user } = useAuth();
   const { settings, updateSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState(settings);
   const [saveMessage, setSaveMessage] = useState('');
@@ -18,17 +20,31 @@ const Settings = () => {
     setTimeout(() => setSaveMessage(''), 3000);
   };
 
+  const handleKeyPress = (e, settingKey) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setLocalSettings(prev => ({ ...prev, [settingKey]: !prev[settingKey] }));
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white shadow rounded-lg p-8">
         <div className="space-y-6">
           {/* Notification Settings */}
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium">Notifications</h3>
-              <p className="text-sm text-gray-500">Receive in-app notifications</p>
+            <div className="flex items-center space-x-2">
+              <div>
+                <h3 className="text-lg font-medium">Enable Notifications</h3>
+                <p className="text-sm text-gray-500">Receive in-app pop-up notifications for updates.</p>
+              </div>
+              <FiHelpCircle 
+                className="text-gray-400 cursor-help"
+                data-tooltip-id="notifications-tooltip"
+                data-tooltip-content="Get notified instantly within the application."
+              />
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -36,6 +52,8 @@ const Settings = () => {
                 className="sr-only peer"
                 checked={localSettings.notifications}
                 onChange={(e) => setLocalSettings(prev => ({ ...prev, notifications: e.target.checked }))}
+                onKeyPress={(e) => handleKeyPress(e, 'notifications')}
+                aria-label="Toggle notifications"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
@@ -43,9 +61,16 @@ const Settings = () => {
 
           {/* Dark Mode */}
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium">Dark Mode</h3>
-              <p className="text-sm text-gray-500">Toggle dark mode theme</p>
+            <div className="flex items-center space-x-2">
+              <div>
+                <h3 className="text-lg font-medium">Enable Dark Mode</h3>
+                <p className="text-sm text-gray-500">Switch between light and dark theme.</p>
+              </div>
+              <FiHelpCircle 
+                className="text-gray-400 cursor-help"
+                data-tooltip-id="darkmode-tooltip"
+                data-tooltip-content="Apply a darker color scheme to the interface."
+              />
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -53,6 +78,8 @@ const Settings = () => {
                 className="sr-only peer"
                 checked={localSettings.darkMode}
                 onChange={(e) => setLocalSettings(prev => ({ ...prev, darkMode: e.target.checked }))}
+                onKeyPress={(e) => handleKeyPress(e, 'darkMode')}
+                aria-label="Toggle dark mode"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
@@ -60,9 +87,16 @@ const Settings = () => {
 
           {/* Email Updates */}
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium">Email Updates</h3>
-              <p className="text-sm text-gray-500">Receive email notifications</p>
+            <div className="flex items-center space-x-2">
+              <div>
+                <h3 className="text-lg font-medium">Enable Email Updates</h3>
+                <p className="text-sm text-gray-500">Receive email notifications for important updates.</p>
+              </div>
+              <FiHelpCircle 
+                className="text-gray-400 cursor-help"
+                data-tooltip-id="email-tooltip"
+                data-tooltip-content="Receive news and important information via email."
+              />
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -70,6 +104,8 @@ const Settings = () => {
                 className="sr-only peer"
                 checked={localSettings.emailUpdates}
                 onChange={(e) => setLocalSettings(prev => ({ ...prev, emailUpdates: e.target.checked }))}
+                onKeyPress={(e) => handleKeyPress(e, 'emailUpdates')}
+                aria-label="Toggle email updates"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
@@ -77,7 +113,7 @@ const Settings = () => {
 
           {/* Save Message */}
           {saveMessage && (
-            <div className="text-green-600 text-sm">{saveMessage}</div>
+            <div className="text-green-600 text-sm font-medium">{saveMessage}</div>
           )}
 
           {/* Action Buttons */}
@@ -85,20 +121,27 @@ const Settings = () => {
             {user && (
               <a
                 href="/profile/edit"
-                className="px-4 py-2 text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 rounded-md"
+                className="px-4 py-2 text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 rounded-md flex items-center space-x-2 transition-colors"
               >
-                Edit Profile
+                <FiEdit2 className="w-4 h-4" />
+                <span>Edit Profile</span>
               </a>
             )}
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md flex items-center space-x-2 transition-colors"
             >
-              Save Changes
+              <FiSave className="w-4 h-4" />
+              <span>Save Changes</span>
             </button>
           </div>
         </div>
       </div>
+
+      {/* Tooltips */}
+      <Tooltip id="notifications-tooltip" />
+      <Tooltip id="darkmode-tooltip" />
+      <Tooltip id="email-tooltip" />
     </div>
   );
 };

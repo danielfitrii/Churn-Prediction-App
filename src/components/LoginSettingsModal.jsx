@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
+import { FiSave, FiHelpCircle } from 'react-icons/fi';
+import { Tooltip } from 'react-tooltip';
 
 const LoginSettingsModal = ({ showModal, onClose }) => {
   const { settings, updateSettings } = useSettings();
@@ -22,6 +24,13 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
     }, 3000);
   };
 
+  const handleKeyPress = (e, settingKey) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setLocalSettings(prev => ({ ...prev, [settingKey]: !prev[settingKey] }));
+    }
+  };
+
   if (!showModal) {
     return null;
   }
@@ -29,8 +38,8 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-600 bg-opacity-50 flex justify-center items-center">
       <div className={`relative p-8 rounded-lg shadow-lg ${settings.darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} w-full max-w-md max-h-full overflow-y-auto`}>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold">Settings</h3>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-2xl font-bold">Settings</h3>
           <button
             type="button"
             className={`text-gray-400 hover:text-gray-500 ${settings.darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-md p-1`}
@@ -43,11 +52,17 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
           </button>
         </div>
         <div className="space-y-6">
-          {/* Notification Settings */}
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium">Notifications</h3>
-              <p className="text-sm text-gray-500">Receive in-app notifications</p>
+            <div className="flex items-center space-x-2">
+              <div>
+                <h3 className="text-lg font-medium">Enable Notifications</h3>
+                <p className="text-sm text-gray-500">Receive in-app pop-up notifications for updates.</p>
+              </div>
+              <FiHelpCircle 
+                className="text-gray-400 cursor-help"
+                data-tooltip-id="notifications-tooltip-modal"
+                data-tooltip-content="Get notified instantly within the application."
+              />
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -55,16 +70,24 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
                 className="sr-only peer"
                 checked={localSettings.notifications}
                 onChange={(e) => setLocalSettings(prev => ({ ...prev, notifications: e.target.checked }))}
+                onKeyPress={(e) => handleKeyPress(e, 'notifications')}
+                aria-label="Toggle notifications"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
-          {/* Dark Mode */}
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium">Dark Mode</h3>
-              <p className="text-sm text-gray-500">Toggle dark mode theme</p>
+            <div className="flex items-center space-x-2">
+              <div>
+                <h3 className="text-lg font-medium">Enable Dark Mode</h3>
+                <p className="text-sm text-gray-500">Switch between light and dark theme.</p>
+              </div>
+              <FiHelpCircle 
+                className="text-gray-400 cursor-help"
+                data-tooltip-id="darkmode-tooltip-modal"
+                data-tooltip-content="Apply a darker color scheme to the interface."
+              />
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -72,16 +95,24 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
                 className="sr-only peer"
                 checked={localSettings.darkMode}
                 onChange={(e) => setLocalSettings(prev => ({ ...prev, darkMode: e.target.checked }))}
+                onKeyPress={(e) => handleKeyPress(e, 'darkMode')}
+                aria-label="Toggle dark mode"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
-          {/* Email Updates */}
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium">Email Updates</h3>
-              <p className="text-sm text-gray-500">Receive email notifications</p>
+            <div className="flex items-center space-x-2">
+              <div>
+                <h3 className="text-lg font-medium">Enable Email Updates</h3>
+                <p className="text-sm text-gray-500">Receive email notifications for important updates.</p>
+              </div>
+              <FiHelpCircle 
+                className="text-gray-400 cursor-help"
+                data-tooltip-id="email-tooltip-modal"
+                data-tooltip-content="Receive news and important information via email."
+              />
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -89,22 +120,22 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
                 className="sr-only peer"
                 checked={localSettings.emailUpdates}
                 onChange={(e) => setLocalSettings(prev => ({ ...prev, emailUpdates: e.target.checked }))}
+                onKeyPress={(e) => handleKeyPress(e, 'emailUpdates')}
+                aria-label="Toggle email updates"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
-          {/* Save Message */}
           {saveMessage && (
             <div className="text-green-600 text-sm">{saveMessage}</div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-end">
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className={`px-4 py-2 text-sm font-medium rounded-md text-white ${isSaving ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+              className={`px-4 py-2 text-sm font-medium rounded-md text-white flex items-center space-x-2 transition-colors ${isSaving ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
             >
               {isSaving ? (
                 <span className="flex items-center">
@@ -115,12 +146,19 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
                   Saving...
                 </span>
               ) : (
-                'Save Changes'
+                <>
+                  <FiSave className="w-4 h-4" />
+                  <span>Save Changes</span>
+                </>
               )}
             </button>
           </div>
         </div>
       </div>
+      
+      <Tooltip id="notifications-tooltip-modal" />
+      <Tooltip id="darkmode-tooltip-modal" />
+      <Tooltip id="email-tooltip-modal" />
     </div>
   );
 };

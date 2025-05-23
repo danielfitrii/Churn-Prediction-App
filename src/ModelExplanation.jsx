@@ -11,6 +11,19 @@ import {
 } from "recharts";
 import shapSummary from './assets/LogisticRegression_SHAP.png';
 import Plot from "react-plotly.js";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+    faCheckCircle, 
+    faExclamationTriangle, 
+    faChartBar, 
+    faFileAlt,
+    faArrowUp,
+    faArrowDown,
+    faChartArea,
+    faCrosshairs,
+    faBinoculars,
+    faBalanceScale
+} from '@fortawesome/free-solid-svg-icons';
 
 // Cache for storing processed data
 const dataCache = {
@@ -93,6 +106,15 @@ export default function ModelExplanation() {
     
     // Create a ref for the worker
     const workerRef = useRef(null);
+
+    // Add refs for scroll targets
+    const featureImportanceRef = useRef(null);
+    const performanceRef = useRef(null);
+    const shapRef = useRef(null);
+
+    const scrollToSection = (ref) => {
+        ref.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     // Initialize worker
     useEffect(() => {
@@ -241,7 +263,8 @@ export default function ModelExplanation() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+        <div className="max-w-4xl mx-auto">
+
             {/* Tabs */}
             <div className="flex space-x-4 mb-6">
                 {Object.keys(modelData).map((modelName) => (
@@ -259,183 +282,243 @@ export default function ModelExplanation() {
                 ))}
             </div>
 
-            {/* Model Overview */}
-            <section className="mb-6">
-                <h1 className="text-3xl font-bold text-blue-700 mb-2">
-                    {model.name} Explanation
-                </h1>
-                <p className="text-gray-700 mb-1">
-                    <strong>Type:</strong> {model.type}
-                </p>
-                <p className="text-gray-700 mb-1">
-                    <strong>Description:</strong> {model.description}
-                </p>
-                <p className="text-gray-700">
-                    <strong>Prediction Pipeline:</strong> {model.pipeline}
-                </p>
-            </section>
-
-            {/* Feature Importance */}
-            <section className="mb-6">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-2">Feature Importance</h2>
-
-                {model.features && model.features.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart
-                            data={model.features}
-                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="feature" tick={{ fontSize: 12 }} />
-                            <YAxis />
-                            <Tooltip formatter={(value) => [`${value}%`, "Importance"]} />
-                            <Bar dataKey="importance">
-                                {model.features.map((entry, index) => (
-                                    <Cell
-                                        key={`cell-${index}`}
-                                        fill={
-                                            [
-                                                "#60a5fa", // blue-400
-                                                "#34d399", // green-400
-                                                "#fbbf24", // yellow-400
-                                                "#f87171", // red-400
-                                                "#a78bfa", // purple-400
-                                                "#f472b6", // pink-400
-                                                "#38bdf8", // sky-400
-                                                "#fb923c", // orange-400
-                                                "#4ade80", // emerald-400
-                                                "#c084fc", // violet-400
-                                            ][index % 10]
-                                        }
-                                    />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                ) : (
-                    <p className="text-gray-500">No feature importance data available.</p>
-                )}
-
-                <p className="text-gray-700 mt-2">
-                    These features have the highest impact on this model's predictions.
-                </p>
-            </section>
-
-            {/* Model Metrics */}
-            <section className="mb-6">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                    Model Performance
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-green-50 p-4 rounded-lg shadow text-center">
-                        <h3 className="text-sm text-gray-600 font-medium mb-1">Accuracy</h3>
-                        <p className="text-2xl font-bold text-gray-800">{model.metrics.accuracy}</p>
+            <div className="p-6 bg-white rounded-lg shadow-lg">
+                {/* Model Overview */}
+                <section className="mb-6">
+                    <h1 className="text-3xl font-bold text-blue-700 mb-4">
+                        {model.name} Explanation
+                    </h1>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                        <table className="w-full">
+                            <tbody>
+                                <tr>
+                                    <td className="py-2 font-semibold text-gray-700 w-1/4">Type:</td>
+                                    <td className="py-2 text-gray-600">{model.type}</td>
+                                </tr>
+                                <tr>
+                                    <td className="py-2 font-semibold text-gray-700">Description:</td>
+                                    <td className="py-2 text-gray-600">{model.description}</td>
+                                </tr>
+                                <tr>
+                                    <td className="py-2 font-semibold text-gray-700">Pipeline:</td>
+                                    <td className="py-2 text-gray-600">{model.pipeline}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div className="bg-blue-50 p-4 rounded-lg shadow text-center">
-                        <h3 className="text-sm text-gray-600 font-medium mb-1">Precision</h3>
-                        <p className="text-2xl font-bold text-gray-800">{model.metrics.precision}</p>
-                    </div>
-                    <div className="bg-yellow-50 p-4 rounded-lg shadow text-center">
-                        <h3 className="text-sm text-gray-600 font-medium mb-1">Recall</h3>
-                        <p className="text-2xl font-bold text-gray-800">{model.metrics.recall}</p>
-                    </div>
-                    <div className="bg-purple-50 p-4 rounded-lg shadow text-center">
-                        <h3 className="text-sm text-gray-600 font-medium mb-1">F1-Score</h3>
-                        <p className="text-2xl font-bold text-gray-800">{model.metrics.f1}</p>
-                    </div>
-                </div>
+                </section>
 
-            </section>
+                {/* Feature Importance */}
+                <section ref={featureImportanceRef} className="mb-6">
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        Feature Importance
+                    </h2>
 
-            {/* SHAP Violin Plot */}
-            <section className="mb-6">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                    SHAP Value Distribution (Violin Plot)
-                </h2>
-                {shapValues.length && featureNames.length && featureValues.length && sortedFeatureNames.length ? (
-                    <Plot
-                        data={sortedFeatureNames.map((feature, i) => ({
-                            type: "scatter",
-                            mode: "markers",
-                            x: shapValues.map(sample => sample[feature]),
-                            y: Array(shapValues.length).fill(feature),
-                            name: feature,
-                            marker: {
-                                color: featureValues.map(sample => sample[feature]),
-                                colorscale: 'RdBu',
-                                showscale: i === 0,
-                                colorbar: i === 0 ? {
-                                    title: 'Feature value',
-                                    thickness: 15,
-                                    x: 1.05,
-                                } : undefined,
-                                size: 4,
-                                opacity: 0.6,
-                                line: {
-                                    width: 0.2,
-                                    color: 'gray'
+                    {model.features && model.features.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart
+                                data={model.features}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                    dataKey="feature" 
+                                    tick={{ fontSize: 12 }}
+                                    interval={0}
+                                />
+                                <YAxis 
+                                    domain={[0, 25]}
+                                    ticks={[0, 5, 10, 15, 20, 25]}
+                                />
+                                <Tooltip 
+                                    formatter={(value) => [`${value}%`, "Importance"]}
+                                    contentStyle={{
+                                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                        border: '1px solid #ccc',
+                                        borderRadius: '4px',
+                                        padding: '8px'
+                                    }}
+                                />
+                                <Bar dataKey="importance">
+                                    {model.features.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={
+                                                [
+                                                    "#60a5fa",
+                                                    "#34d399",
+                                                    "#fbbf24",
+                                                    "#f87171",
+                                                    "#a78bfa",
+                                                    "#f472b6",
+                                                    "#38bdf8",
+                                                    "#fb923c",
+                                                ][index % 8]
+                                            }
+                                        />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <p className="text-gray-500">No feature importance data available.</p>
+                    )}
+                </section>
+
+                {/* Model Metrics */}
+                <section ref={performanceRef} className="mb-6">
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        Model Performance
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-green-50 p-4 rounded-lg shadow border-l-4 border-green-500">
+                            <div className="flex items-center">
+                                <FontAwesomeIcon icon={faCheckCircle} className="h-6 w-6 text-green-500 mr-2" />
+                                <div>
+                                    <h3 className="text-sm text-gray-600 font-medium">Accuracy</h3>
+                                    <p className="text-2xl font-bold text-gray-800">{model.metrics.accuracy}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-blue-50 p-4 rounded-lg shadow border-l-4 border-blue-500">
+                            <div className="flex items-center">
+                                <FontAwesomeIcon icon={faCrosshairs} className="h-6 w-6 text-blue-500 mr-2" />
+                                <div>
+                                    <h3 className="text-sm text-gray-600 font-medium">Precision</h3>
+                                    <p className="text-2xl font-bold text-gray-800">{model.metrics.precision}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-yellow-50 p-4 rounded-lg shadow border-l-4 border-yellow-500">
+                            <div className="flex items-center">
+                                <FontAwesomeIcon icon={faBinoculars} className="h-6 w-6 text-yellow-500 mr-2" />
+                                <div>
+                                    <h3 className="text-sm text-gray-600 font-medium">Recall</h3>
+                                    <p className="text-2xl font-bold text-gray-800">{model.metrics.recall}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-purple-50 p-4 rounded-lg shadow border-l-4 border-purple-500">
+                            <div className="flex items-center">
+                                <FontAwesomeIcon icon={faBalanceScale} className="h-6 w-6 text-purple-500 mr-2" />
+                                <div>
+                                    <h3 className="text-sm text-gray-600 font-medium">F1-Score</h3>
+                                    <p className="text-2xl font-bold text-gray-800">{model.metrics.f1}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* SHAP Violin Plot */}
+                <section ref={shapRef} className="mb-6">
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        SHAP Value Distribution
+                    </h2>
+                    
+                    {/* SHAP Legend */}
+                    <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                        <div className="flex flex-col space-y-2">
+                            <div className="flex items-center">
+                                <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                                <span>Higher SHAP value → More likely to churn</span>
+                            </div>
+                            <div className="flex items-center">
+                                <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                                <span>Lower SHAP value → Less likely to churn</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {shapValues.length && featureNames.length && featureValues.length && sortedFeatureNames.length ? (
+                        <Plot
+                            data={sortedFeatureNames.map((feature, i) => ({
+                                type: "scatter",
+                                mode: "markers",
+                                x: shapValues.map(sample => sample[feature]),
+                                y: Array(shapValues.length).fill(feature),
+                                name: feature,
+                                marker: {
+                                    color: featureValues.map(sample => sample[feature]),
+                                    colorscale: 'RdBu',
+                                    showscale: i === 0,
+                                    colorbar: i === 0 ? {
+                                        title: 'Feature value',
+                                        thickness: 15,
+                                        x: 1.05,
+                                    } : undefined,
+                                    size: 4,
+                                    opacity: 0.6,
+                                    line: {
+                                        width: 0.2,
+                                        color: 'gray'
+                                    }
+                                },
+                                hovertemplate: 
+                                    '<b>%{y}</b><br>' +
+                                    'SHAP Value: %{x:.3f}<br>' +
+                                    'Feature Value: %{marker.color:.3f}<br>' +
+                                    '<extra></extra>'
+                            }))}
+                            layout={{
+                                title: "SHAP Value Distribution per Feature",
+                                xaxis: { 
+                                    title: "SHAP value (impact on model output)",
+                                    autorange: true,
+                                    fixedrange: true
+                                },
+                                yaxis: { 
+                                    title: "Feature", 
+                                    type: 'category', 
+                                    autorange: 'reversed',
+                                    fixedrange: true
+                                },
+                                margin: {
+                                    l: Math.max(...sortedFeatureNames.map(f => f.length)) * 7.5,
+                                    r: 120, 
+                                    t: 40, 
+                                    b: 40
+                                },
+                                height: 600,
+                                showlegend: false,
+                                hovermode: 'closest',
+                                dragmode: false,
+                                modebar: {
+                                    remove: ['lasso2d', 'select2d', 'zoom2d', 'pan2d']
                                 }
-                            }
-                        }))}
-                        layout={{
-                            title: "SHAP Value Distribution per Feature",
-                            xaxis: { 
-                                title: "SHAP value (impact on model output)",
-                                autorange: true,
-                                fixedrange: true
-                            },
-                            yaxis: { 
-                                title: "Feature", 
-                                type: 'category', 
-                                autorange: 'reversed',
-                                fixedrange: true
-                            },
-                            margin: {
-                                l: Math.max(...sortedFeatureNames.map(f => f.length)) * 7.5,
-                                r: 120, 
-                                t: 40, 
-                                b: 40
-                            },
-                            height: 600,
-                            showlegend: false,
-                            hovermode: 'closest',
-                            dragmode: false,
-                            modebar: {
-                                remove: ['lasso2d', 'select2d', 'zoom2d', 'pan2d']
-                            }
-                        }}
-                        config={{ 
-                            responsive: true,
-                            displayModeBar: false,
-                            staticPlot: false,
-                            displaylogo: false,
-                            modeBarButtonsToRemove: ['lasso2d', 'select2d', 'zoom2d', 'pan2d'],
-                            scrollZoom: false
-                        }}
-                        style={{ width: "100%" }}
-                        useResizeHandler={true}
-                        frames={[]}
-                    />
-                ) : (
-                    <div>Loading SHAP violin plot...</div>
-                )}
-            </section>
+                            }}
+                            config={{ 
+                                responsive: true,
+                                displayModeBar: false,
+                                staticPlot: false,
+                                displaylogo: false,
+                                modeBarButtonsToRemove: ['lasso2d', 'select2d', 'zoom2d', 'pan2d'],
+                                scrollZoom: false
+                            }}
+                            style={{ width: "100%" }}
+                            useResizeHandler={true}
+                            frames={[]}
+                        />
+                    ) : (
+                        <div>Loading SHAP violin plot...</div>
+                    )}
+                </section>
 
-            {/* Caveats */}
-            <section>
-                <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                    Caveats &amp; Limitations
-                </h2>
-                <p className="text-gray-700 mb-2">
-                    Predictions depend on the quality and relevance of the input data. Results may
-                    degrade over time if customer behavior evolves. Also, false positives may trigger
-                    unnecessary retention actions, while false negatives may lead to missed risks.
-                </p>
-                <p className="text-gray-700">
-                    Always pair predictions with human insight and regularly retrain the model with
-                    updated data.
-                </p>
-            </section>
+                {/* Caveats */}
+                <section>
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <FontAwesomeIcon icon={faExclamationTriangle} className="h-6 w-6 mr-2 text-yellow-500" />
+                        Model Limitations
+                    </h2>
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                        <ul className="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Accuracy depends on input data quality and relevance</li>
+                            <li>False positives may trigger unnecessary retention efforts</li>
+                            <li>False negatives may lead to missed churn risks</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
         </div>
     );
 }
