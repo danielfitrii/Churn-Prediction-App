@@ -1,22 +1,29 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { loginUser } from '../firebaseHelpers';
+import firebaseApp from '../firebaseConfig';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 const AuthContext = createContext(null);
+
+const db = getFirestore(firebaseApp);
+const auth = getAuth(firebaseApp);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem("user");
     const storedTimestamp = localStorage.getItem("userTimestamp");
-    
+
     // Check if the stored user data is still valid (24 hours)
     if (stored && storedTimestamp) {
       const timestamp = parseInt(storedTimestamp);
       const now = new Date().getTime();
       if (now - timestamp < 24 * 60 * 60 * 1000) {
+        // Return stored user for quick initial load
         return JSON.parse(stored);
       }
     }
-    
+
     // Clear invalid or expired data
     localStorage.removeItem("user");
     localStorage.removeItem("userTimestamp");
@@ -25,6 +32,41 @@ export const AuthProvider = ({ children }) => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Effect to fetch latest user data from Firestore after initial load or user change
+  useEffect(() => {
+    if (user?.uid) {
+      const fetchLatestUserData = async () => {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            const latestUserData = { uid: user.uid, email: user.email, ...userDocSnap.data() };
+            // Only update state and local storage if data is different to avoid unnecessary re-renders
+            if (JSON.stringify(user) !== JSON.stringify(latestUserData)) {
+                 setUser(latestUserData);
+                 localStorage.setItem("user", JSON.stringify(latestUserData));
+                 localStorage.setItem("userTimestamp", new Date().getTime().toString()); // Update timestamp as well
+            }
+          } else {
+             // If Firestore doc doesn't exist, clear local storage (shouldn't happen with current logic)
+             console.warn("User document not found in Firestore for UID:", user.uid);
+             logout(); // Log out user if their Firestore document is missing
+          }
+        } catch (error) {
+          console.error("Error fetching latest user data from Firestore:", error);
+          // Optionally, handle error display to user
+        }
+      };
+
+      fetchLatestUserData();
+
+      // No need to set up a real-time listener for this request, just fetch on mount/user change.
+      // If real-time updates across tabs are needed, a snapshot listener would be better.
+
+    }
+  }, [user?.uid]); // Re-run effect if user UID changes (e.g., after login/logout)
 
   // Auto-logout after 24 hours of inactivity
   useEffect(() => {
@@ -74,12 +116,35 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("userTimestamp");
   };
 
-  const updateUserProfile = (updates) => {
+  const updateUserProfile = async (updates) => {
     if (user) {
-      const updatedUser = { ...user, ...updates };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      return true;
+      try {
+        console.log("Updates submitted:", updates);
+
+        await setDoc(doc(db, 'users', user.uid), updates, { merge: true });
+
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) throw new Error("User document not found");
+
+        const freshUser = {
+          uid: user.uid,
+          email: user.email,
+          ...userDoc.data()
+        };
+
+        console.log("Fresh user after Firestore update:", freshUser);
+
+        setUser(freshUser);
+        localStorage.setItem("user", JSON.stringify(freshUser));
+        localStorage.setItem("userTimestamp", new Date().getTime().toString());
+
+        console.log("Local storage now:", localStorage.getItem("user"));
+
+        return true;
+      } catch (error) {
+        console.error("Error updating user profile in Firestore:", error);
+        return false;
+      }
     }
     return false;
   };
@@ -93,12 +158,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        login, 
-        logout, 
-        loading, 
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        loading,
         error,
         updateUserProfile,
         isAuthenticated,

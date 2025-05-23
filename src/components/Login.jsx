@@ -13,6 +13,14 @@ const Login = () => {
   const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
 
+  const handleMouseDown = () => {
+    setShowPassword(true);
+  };
+
+  const handleMouseUp = () => {
+    setShowPassword(false);
+  };
+
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail');
     if (savedEmail) {
@@ -130,7 +138,9 @@ const Login = () => {
               <button
                 type="button"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => setShowPassword(!showPassword)}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
               >
                 {showPassword ? (
                   <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

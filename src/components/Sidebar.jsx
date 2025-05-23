@@ -117,10 +117,10 @@ const Sidebar = ({ isExpanded, setIsExpanded }) => {
             {isExpanded && (
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium truncate ${settings.darkMode ? 'text-white' : 'text-gray-800'}`}>
-                  {user?.email}
+                  {user?.firstName} {user?.lastName}
                 </p>
                 <p className={`text-xs truncate ${settings.darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {user?.role}
+                  {user?.email}
                 </p>
               </div>
             )}

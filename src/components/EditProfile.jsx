@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword as firebaseUpdatePassword } from 'firebase/auth';
 
 const EditProfile = () => {
   const { user, updateUserProfile } = useAuth();
@@ -25,6 +26,9 @@ const EditProfile = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState(user?.profilePicture || null);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -77,28 +81,73 @@ const EditProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrors({}); // Clear previous errors
+    setSuccess(''); // Clear previous success message
+
     if (!validateForm()) return;
 
     setLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update user profile
-      await updateUserProfile({
-        ...formData,
-        profilePicture: previewImage
-      });
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
 
-      setSuccess('Profile updated successfully');
+    if (!currentUser) {
+      setErrors({ submit: 'No authenticated user found.' });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Update general profile information if changed (excluding passwords)
+      const profileUpdates = { ...formData };
+      delete profileUpdates.currentPassword;
+      delete profileUpdates.newPassword;
+      delete profileUpdates.confirmPassword;
+      profileUpdates.profilePicture = previewImage; // Include profile picture
+
+      await updateUserProfile(profileUpdates);
+
+      // Handle password change separately if new password is provided
+      if (formData.newPassword && formData.currentPassword) {
+        const credential = EmailAuthProvider.credential(currentUser.email, formData.currentPassword);
+        await reauthenticateWithCredential(currentUser, credential);
+
+        await firebaseUpdatePassword(currentUser, formData.newPassword);
+        setSuccess('Profile and password updated successfully!');
+
+      } else if (formData.newPassword || formData.currentPassword) {
+         // Handle case where only one password field is filled during password change attempt
+         setErrors({ passwordChange: 'Both current and new password are required to change password.' });
+         setLoading(false);
+         return;
+      }
+       else {
+         // If no new password was provided, only profile was updated
+         setSuccess('Profile updated successfully!');
+       }
+
+      // Clear password fields after successful update (or if no new password was attempted)
       setFormData(prev => ({
         ...prev,
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       }));
+
     } catch (error) {
-      setErrors({ submit: 'Failed to update profile. Please try again.' });
+      console.error('Error updating profile or password:', error);
+      let errorMessage = 'Failed to update profile. Please try again.';
+
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect current password. Please try again.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'New password is too weak. Please choose a stronger password.';
+      } else if (error.code === 'auth/requires-recent-login') {
+        errorMessage = 'Please log in again to update your password.';
+      } else if (error.message) {
+         errorMessage = error.message;
+      }
+
+      setErrors({ submit: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -242,48 +291,108 @@ const EditProfile = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium mb-2">Current Password</label>
-                <input
-                  type="password"
-                  name="currentPassword"
-                  value={formData.currentPassword}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 rounded-lg border ${
-                    settings.darkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300'
-                  }`}
-                />
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    name="currentPassword"
+                    value={formData.currentPassword}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      settings.darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onMouseDown={() => setShowCurrentPassword(true)}
+                    onMouseUp={() => setShowCurrentPassword(false)}
+                    onMouseLeave={() => setShowCurrentPassword(false)}
+                  >
+                    {showCurrentPassword ? (
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">New Password</label>
-                <input
-                  type="password"
-                  name="newPassword"
-                  value={formData.newPassword}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 rounded-lg border ${
-                    settings.darkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300'
-                  }`}
-                />
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    name="newPassword"
+                    value={formData.newPassword}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      settings.darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onMouseDown={() => setShowNewPassword(true)}
+                    onMouseUp={() => setShowNewPassword(false)}
+                    onMouseLeave={() => setShowNewPassword(false)}
+                  >
+                    {showNewPassword ? (
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {errors.newPassword && (
                   <p className="mt-1 text-sm text-red-600">{errors.newPassword}</p>
                 )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Confirm New Password</label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 rounded-lg border ${
-                    settings.darkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300'
-                  }`}
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      settings.darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onMouseDown={() => setShowConfirmPassword(true)}
+                    onMouseUp={() => setShowConfirmPassword(false)}
+                    onMouseLeave={() => setShowConfirmPassword(false)}
+                  >
+                    {showConfirmPassword ? (
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {errors.confirmPassword && (
                   <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
                 )}

@@ -21,11 +21,23 @@ export async function registerUser(email, password, role = 'user', userData = {}
   return user.uid;
 }
 
-// Login: Use Firebase Auth
+// Login: Use Firebase Auth and return full profile from Firestore
 export async function loginUser(email, password) {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
-  // Optionally fetch user profile from Firestore
+
   const userDoc = await getDoc(doc(db, 'users', user.uid));
-  return userDoc.exists() ? { id: user.uid, ...userDoc.data() } : null;
-} 
+  if (userDoc.exists()) {
+    return {
+      uid: user.uid,
+      email: user.email,
+      ...userDoc.data()
+    };
+  } else {
+    // Fallback in case Firestore profile is missing
+    return {
+      uid: user.uid,
+      email: user.email
+    };
+  }
+}

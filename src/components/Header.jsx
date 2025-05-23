@@ -61,10 +61,10 @@ const Header = ({ isExpanded }) => {
             </div>
             <div className="hidden md:block">
               <p className={`text-sm font-medium ${settings.darkMode ? 'text-white' : 'text-gray-800'}`}>
-                {user?.email}
+                {user?.firstName} {user?.lastName}
               </p>
               <p className={`text-xs ${settings.darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {user?.role}
+                {user?.email}
               </p>
             </div>
           </Link>
