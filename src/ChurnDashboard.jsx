@@ -19,6 +19,10 @@ export default function ChurnDashboard() {
   const [timeframe, setTimeframe] = useState("month");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // State for sorting
+  const [sortColumn, setSortColumn] = useState('timestamp'); // Default sort by date
+  const [sortOrder, setSortOrder] = useState('desc'); // Default sort descending
+
   // State for chart data
   const [monthlyChurnData, setMonthlyChurnData] = useState([]);
   const [quarterlyChurnData, setQuarterlyChurnData] = useState([]);
@@ -31,7 +35,7 @@ export default function ChurnDashboard() {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
   // Define specific colors for gender chart
-  const GENDER_COLORS = ['#36A2EB', '#FF6384', '#FFCE56']; // Blue for Male, Pink for Female, Yellow for Undisclosed
+  const GENDER_COLORS = ['#36A2EB', '#FF6384', '#B39DDB']; // Blue for Male, Pink for Female, Soft Purple for Undisclosed
 
   // Helper function to highlight matching text
   const highlightText = (text, query) => {
@@ -43,6 +47,24 @@ export default function ChurnDashboard() {
         <span key={i} className="bg-yellow-200">{part}</span> :
         part
     );
+  };
+
+  // Handle table header click for sorting
+  const handleHeaderClick = (column) => {
+    if (sortColumn === column) {
+      if (sortOrder === 'asc') {
+        // If currently ascending, change to descending
+        setSortOrder('desc');
+      } else {
+        // If currently descending (or any other state on the same column), reset to default (timestamp desc)
+        setSortColumn('timestamp');
+        setSortOrder('desc');
+      }
+    } else {
+      // If clicking a new column, set it as the sort column and default to ascending
+      setSortColumn(column);
+      setSortOrder('asc');
+    }
   };
 
   // Simulate data loading with real-time listeners
@@ -322,12 +344,12 @@ export default function ChurnDashboard() {
         };
       });
 
-      // Sort all predictions by timestamp descending for the "Recent Predictions" table
-      allPredictionsData.sort((a, b) => b.timestamp?.toDate().getTime() - a.timestamp?.toDate().getTime());
+      // Sort all predictions by timestamp descending for the "Recent Predictions" table - UPDATED
+      // allPredictionsData.sort((a, b) => b.timestamp?.toDate().getTime() - a.timestamp?.toDate().getTime());
 
       setStatistics(prevStats => ({
           ...prevStats,
-          recentPredictions: allPredictionsData // Set all fetched and sorted predictions
+          recentPredictions: allPredictionsData // Set all fetched predictions (sorting will be applied later)
       }));
 
       setLoading(false); // Set loading to false after all data is processed
@@ -370,6 +392,34 @@ export default function ChurnDashboard() {
     prediction.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
     prediction.region.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Filter and sort predictions based on search query and sort state
+  const sortedPredictions = filteredPredictions.sort((a, b) => {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+
+      let comparison = 0;
+
+      // Handle different data types for sorting
+      if (sortColumn === 'probability') {
+          comparison = aValue - bValue;
+      } else if (sortColumn === 'date' || sortColumn === 'timestamp') {
+           // Compare timestamps for date sorting
+          const aTime = a.timestamp?.toDate().getTime() || 0;
+          const bTime = b.timestamp?.toDate().getTime() || 0;
+           comparison = aTime - bTime;
+      } else {
+          // Default to string comparison for other columns (customer, region, model, status)
+           if (aValue > bValue) {
+            comparison = 1;
+          } else if (aValue < bValue) {
+            comparison = -1;
+          }
+      }
+
+      // Apply sort order
+      return sortOrder === 'desc' ? comparison * -1 : comparison;
+  });
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
@@ -606,16 +656,40 @@ export default function ChurnDashboard() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Customer</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Region</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Probability</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Model</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider bg-gray-50 cursor-pointer ${sortColumn === 'customer' ? 'text-gray-900' : 'text-gray-500'}`}
+                        style={{ userSelect: 'none' }}
+                        onClick={() => handleHeaderClick('customer')}>
+                         Customer {sortColumn === 'customer' && sortOrder === 'asc' && ' ↑'}{sortColumn === 'customer' && sortOrder === 'desc' && ' ↓'}
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider bg-gray-50 cursor-pointer ${sortColumn === 'region' ? 'text-gray-900' : 'text-gray-500'}`}
+                        style={{ userSelect: 'none' }}
+                        onClick={() => handleHeaderClick('region')}>
+                         Region {sortColumn === 'region' && sortOrder === 'asc' && ' ↑'}{sortColumn === 'region' && sortOrder === 'desc' && ' ↓'}
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider bg-gray-50 cursor-pointer ${sortColumn === 'date' ? 'text-gray-900' : 'text-gray-500'}`}
+                        style={{ userSelect: 'none' }}
+                        onClick={() => handleHeaderClick('date')}>
+                         Date {sortColumn === 'date' && sortOrder === 'asc' && ' ↑'}{sortColumn === 'date' && sortOrder === 'desc' && ' ↓'}
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider bg-gray-50 cursor-pointer ${sortColumn === 'probability' ? 'text-gray-900' : 'text-gray-500'}`}
+                        style={{ userSelect: 'none' }}
+                        onClick={() => handleHeaderClick('probability')}>
+                         Probability {sortColumn === 'probability' && sortOrder === 'asc' && ' ↑'}{sortColumn === 'probability' && sortOrder === 'desc' && ' ↓'}
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider bg-gray-50 cursor-pointer ${sortColumn === 'model' ? 'text-gray-900' : 'text-gray-500'}`}
+                        style={{ userSelect: 'none' }}
+                        onClick={() => handleHeaderClick('model')}>
+                         Model {sortColumn === 'model' && sortOrder === 'asc' && ' ↑'}{sortColumn === 'model' && sortOrder === 'desc' && ' ↓'}
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider bg-gray-50 cursor-pointer ${sortColumn === 'status' ? 'text-gray-900' : 'text-gray-500'}`}
+                        style={{ userSelect: 'none' }}
+                        onClick={() => handleHeaderClick('status')}>
+                         Status {sortColumn === 'status' && sortOrder === 'asc' && ' ↑'}{sortColumn === 'status' && sortOrder === 'desc' && ' ↓'}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredPredictions.map((prediction) => (
+                    {sortedPredictions.map((prediction) => (
                       <tr
                         key={prediction.id}
                         className={`hover:bg-gray-50 cursor-pointer`}
