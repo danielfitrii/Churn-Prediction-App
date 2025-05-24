@@ -36,12 +36,13 @@ export default function ChurnPredictionApp() {
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     gender: '',
-    age: ''
+    age: '',
+    region: ''
   });
 
   const [showMissingInfoWarning, setShowMissingInfoWarning] = useState(false);
 
-  const isCustomerInfoComplete = customerInfo.name && customerInfo.gender && customerInfo.age;
+  const isCustomerInfoComplete = customerInfo.name && customerInfo.gender && customerInfo.age && customerInfo.region;
 
   const warningRef = useRef(null);
 
@@ -129,7 +130,8 @@ export default function ChurnPredictionApp() {
             customerID: nextCustomerId, // Use the auto-incremented ID
             name: customerInfo.name,
             gender: customerInfo.gender,
-            age: customerInfo.age
+            age: customerInfo.age,
+            region: customerInfo.region
           },
           features: {
             tenure: Number(formData.tenure),
@@ -171,7 +173,12 @@ export default function ChurnPredictionApp() {
 
   const makePrediction = async (features, model) => {
     try {
-      const response = await fetch('https://churn-prediction-flask-app-307074742286.asia-southeast1.run.app/predict', {
+      // Use local backend URL in development, deployed URL in production
+      const backendUrl = import.meta.env.DEV 
+        ? 'http://localhost:5000/predict'
+        : 'https://churn-prediction-flask-app-307074742286.asia-southeast1.run.app/predict';
+        
+      const response = await fetch(backendUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -215,6 +222,17 @@ export default function ChurnPredictionApp() {
               className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border text-center bg-white"
             />
           </div>
+          <div className="w-32">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+            <input
+              type="number"
+              name="age"
+              value={customerInfo.age}
+              onChange={handleCustomerInfoChange}
+              className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border text-center bg-white"
+              min="0"
+            />
+          </div>
           <div className="mb-2 md:mb-0 w-40">
             <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
             <select
@@ -226,18 +244,35 @@ export default function ChurnPredictionApp() {
               <option value="">Select</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
+              <option value="Undisclosed">Undisclosed</option>
             </select>
           </div>
-          <div className="w-32">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-            <input
-              type="number"
-              name="age"
-              value={customerInfo.age}
+          <div className="mb-2 md:mb-0 w-48">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+            <select
+              name="region"
+              value={customerInfo.region}
               onChange={handleCustomerInfoChange}
               className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border text-center bg-white"
-              min="0"
-            />
+            >
+              <option value="">Select Region</option>
+              <option value="Johor">Johor</option>
+              <option value="Kedah">Kedah</option>
+              <option value="Kelantan">Kelantan</option>
+              <option value="Melaka">Melaka</option>
+              <option value="Negeri Sembilan">Negeri Sembilan</option>
+              <option value="Pahang">Pahang</option>
+              <option value="Perak">Perak</option>
+              <option value="Perlis">Perlis</option>
+              <option value="Pulau Pinang">Pulau Pinang</option>
+              <option value="Sabah">Sabah</option>
+              <option value="Sarawak">Sarawak</option>
+              <option value="Selangor">Selangor</option>
+              <option value="Terengganu">Terengganu</option>
+              <option value="WPKualaLumpur">Wilayah Persekutuan (Kuala Lumpur)</option>
+              <option value="WPLabuan">Wilayah Persekutuan (Labuan)</option>
+              <option value="WPPutrajaya">Wilayah Persekutuan (Putrajaya)</option>
+            </select>
           </div>
         </form>
       </div>

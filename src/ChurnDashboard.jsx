@@ -26,7 +26,12 @@ export default function ChurnDashboard() {
   const [churnByFactorData, setChurnByFactorData] = useState([]); // State for churn factors
   const [churnBySegmentData, setChurnBySegmentData] = useState([]); // State for churn by segment
 
+  const [churnByAgeData, setChurnByAgeData] = useState([]);
+  const [churnByGenderData, setChurnByGenderData] = useState([]);
+
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  // Define specific colors for gender chart
+  const GENDER_COLORS = ['#36A2EB', '#FF6384', '#FFCE56']; // Blue for Male, Pink for Female, Yellow for Undisclosed
 
   // Helper function to highlight matching text
   const highlightText = (text, query) => {
@@ -56,6 +61,8 @@ export default function ChurnDashboard() {
       setYearlyChurnData([]);
       setChurnByFactorData([]);
       setChurnBySegmentData([]);
+      setChurnByAgeData([]);
+      setChurnByGenderData([]);
       setLoading(false);
       return;
     }
@@ -94,6 +101,9 @@ export default function ChurnDashboard() {
       const factors = {};
       const segments = {};
       let churnedCustomersCount = 0;
+
+      const ageData = {};
+      const genderData = {};
 
       querySnapshot.docs.forEach(doc => {
         const data = doc.data();
@@ -176,14 +186,33 @@ export default function ChurnDashboard() {
              factors["High Monthly Charge"].count++;
           }
 
-          // Churn by Segment (Example: Tenure)
-          let segmentName;
-          if (tenureNum < 6) segmentName = "New Customers (<6mo)";
-          else if (tenureNum >= 6 && tenureNum <= 24) segmentName = "Regular (6mo-2yr)";
-          else segmentName = "Loyal (>2yr)";
+          // Process data for Churn by Age and Gender charts (counting total and churned)
+          const age = Number(data.customerInfo?.age) || 0;
+          const gender = data.customerInfo?.gender || 'Unknown';
 
-          if (!segments[segmentName]) segments[segmentName] = { count: 0, name: segmentName };
-          segments[segmentName].count++;
+          let ageGroup;
+          if (age >= 18 && age <= 30) ageGroup = '18-30';
+          else if (age > 30 && age <= 50) ageGroup = '31-50';
+          else if (age > 50) ageGroup = '51+';
+          else ageGroup = 'Unknown';
+
+          // Initialize age group data if not exists
+          if (!ageData[ageGroup]) {
+              ageData[ageGroup] = { total: 0, churned: 0, name: ageGroup };
+          }
+          ageData[ageGroup].total++;
+          if (churnProbability > 50) {
+              ageData[ageGroup].churned++;
+          }
+
+          // Initialize gender data if not exists
+          if (!genderData[gender]) {
+              genderData[gender] = { total: 0, churned: 0, name: gender };
+          }
+          genderData[gender].total++;
+          if (churnProbability > 50) {
+              genderData[gender].churned++;
+          }
         }
 
       });
@@ -238,24 +267,45 @@ export default function ChurnDashboard() {
          }))
          .sort((a, b) => b.value - a.value); // Sort by value (percentage)
 
-      // Sort segments in the desired order
-      const segmentOrder = [
-        "New Customers (<6mo)",
-        "Regular (6mo-2yr)",
-        "Loyal (>2yr)"
-      ];
-      const formatSegmentData = (data) => Object.entries(data)
-         .map(([name, item]) => ({
-            name,
-            value: churnedCustomersCount > 0 ? parseFloat(((item.count / churnedCustomersCount) * 100).toFixed(1)) : 0,
-         }))
-         .sort((a, b) => segmentOrder.indexOf(a.name) - segmentOrder.indexOf(b.name));
+      // Sort segments in the desired order - COMMENTED OUT
+      // const segmentOrder = [
+      //   "New Customers (<6mo)",
+      //   "Regular (6mo-2yr)",
+      //   "Loyal (>2yr)"
+      // ];
+      // const formatSegmentData = (data) => Object.entries(data)
+      //    .map(([name, item]) => ({
+      //       name,
+      //       value: churnedCustomersCount > 0 ? parseFloat(((item.count / churnedCustomersCount) * 100).toFixed(1)) : 0,
+      //    }))
+      //    .sort((a, b) => segmentOrder.indexOf(a.name) - segmentOrder.indexOf(b.name));
+
+      // Format data for Age and Gender charts (calculate percentage of total churned)
+      const formatAgeData = (data) => Object.values(data)
+          .map(item => ({
+              name: item.name,
+              value: churnedCustomersCount > 0 ? parseFloat(((item.churned / churnedCustomersCount) * 100).toFixed(1)) : 0
+          }))
+           .sort((a, b) => a.name.localeCompare(b.name)); // Sort by age group name
+
+      const formatGenderData = (data) => Object.values(data)
+          .map(item => ({
+              name: item.name,
+              value: churnedCustomersCount > 0 ? parseFloat(((item.churned / churnedCustomersCount) * 100).toFixed(1)) : 0
+          }))
+          .sort((a, b) => {
+             const order = ['Male', 'Female', 'Undisclosed'];
+             return order.indexOf(a.name) - order.indexOf(b.name);
+          }); // Sort by specific gender order
 
       setMonthlyChurnData(formatTrendData(monthly));
       setQuarterlyChurnData(formatTrendData(quarterly));
       setYearlyChurnData(formatTrendData(yearly));
       setChurnByFactorData(formatFactorData(factors));
-      setChurnBySegmentData(formatSegmentData(segments));
+
+      // Set Age and Gender chart data
+      setChurnByAgeData(formatAgeData(ageData));
+      setChurnByGenderData(formatGenderData(genderData));
 
       // Process and set data for Recent Predictions table (using all fetched data)
       const allPredictionsData = querySnapshot.docs.map(doc => {
@@ -268,6 +318,7 @@ export default function ChurnDashboard() {
             model: data.prediction?.model || 'N/A',
             date: data.timestamp?.toDate().toLocaleDateString() || 'N/A',
             timestamp: data.timestamp, // Include the original timestamp
+            region: data.customerInfo?.region || 'N/A', // Include the region
         };
       });
 
@@ -316,7 +367,8 @@ export default function ChurnDashboard() {
 
   // Filter predictions based on search query
   const filteredPredictions = statistics.recentPredictions.filter(prediction =>
-    prediction.customer.toLowerCase().includes(searchQuery.toLowerCase())
+    prediction.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    prediction.region.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -457,41 +509,82 @@ export default function ChurnDashboard() {
 
           {/* Bottom Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Segment Pie Chart */}
-            <div className="col-span-1 bg-white p-6 rounded-lg shadow border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Churn by Customer Segment</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={churnBySegmentData}
-                    cx="50%"
-                    cy="45%" // move pie a bit up to give space for legend
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ value }) => `${value}%`}
-                    labelLine={true}
-                  >
-                    {churnBySegmentData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) => [`${value}%`, "Churned Customers"]}
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                    }}
-                  />
-                  <Legend
-                    layout="horizontal"
-                    verticalAlign="bottom"
-                    align="center"
-                    wrapperStyle={{ marginTop: '10px' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+            {/* Container for Age and Gender Charts */}
+            <div className="col-span-1 flex flex-col gap-8">
+                {/* Churn by Age Group Pie Chart */}
+                 <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Churn by Age Group</h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={churnByAgeData}
+                        cx="50%"
+                        cy="45%" // move pie a bit up to give space for legend
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        // label={({ value }) => `${value}%`}
+                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                        labelLine={true}
+                      >
+                        {churnByAgeData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value) => [`${value}%`, "Churn Rate"]}
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                        }}
+                      />
+                       <Legend
+                        layout="horizontal"
+                        verticalAlign="bottom"
+                        align="center"
+                        wrapperStyle={{ marginTop: '10px' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Churn by Gender Pie Chart */}
+                 <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Churn by Gender</h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={churnByGenderData}
+                        cx="50%"
+                        cy="45%" // move pie a bit up to give space for legend
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                        labelLine={true}
+                      >
+                        {churnByGenderData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={GENDER_COLORS[index % GENDER_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value) => [`${value}%`, "Churn Rate"]}
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                        }}
+                      />
+                       <Legend
+                        layout="horizontal"
+                        verticalAlign="bottom"
+                        align="center"
+                        wrapperStyle={{ marginTop: '10px' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
             </div>
 
             {/* Recent Predictions Table */}
@@ -509,11 +602,12 @@ export default function ChurnDashboard() {
                   <FaSearch className="absolute left-3 top-3 text-gray-400" />
                 </div>
               </div>
-              <div className="overflow-x-auto overflow-y-auto h-80">
+              <div className="overflow-x-auto overflow-y-auto h-180">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Customer</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Region</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Date</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Probability</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Model</th>
@@ -526,12 +620,15 @@ export default function ChurnDashboard() {
                         key={prediction.id}
                         className={`hover:bg-gray-50 cursor-pointer`}
                       >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 hover:text-blue-800">
+                        <td className="px-6 py-4 text-sm font-medium text-blue-600 hover:text-blue-800">
                           {highlightText(prediction.customer, searchQuery)}
                         </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                           {highlightText(prediction.region, searchQuery)}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{prediction.date}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{prediction.probability}%</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{prediction.model}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{prediction.probability}%</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{prediction.model}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                             ${prediction.status === "Low" ? "bg-green-100 text-green-800" :
