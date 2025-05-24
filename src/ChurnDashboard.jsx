@@ -267,11 +267,12 @@ export default function ChurnDashboard() {
             status: data.prediction?.riskLevel || 'N/A',
             model: data.prediction?.model || 'N/A',
             date: data.timestamp?.toDate().toLocaleDateString() || 'N/A',
+            timestamp: data.timestamp, // Include the original timestamp
         };
       });
 
       // Sort all predictions by timestamp descending for the "Recent Predictions" table
-      allPredictionsData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      allPredictionsData.sort((a, b) => b.timestamp?.toDate().getTime() - a.timestamp?.toDate().getTime());
 
       setStatistics(prevStats => ({
           ...prevStats,
