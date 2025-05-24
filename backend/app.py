@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, origins=["https://churn-prediction-ba530.web.app"])  # Apply CORS to the app with specific origin
 
 # Load both models
 models = {

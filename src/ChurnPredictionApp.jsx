@@ -171,7 +171,7 @@ export default function ChurnPredictionApp() {
 
   const makePrediction = async (features, model) => {
     try {
-      const response = await fetch('http://localhost:5000/predict', {
+      const response = await fetch('https://churn-prediction-flask-app-307074742286.asia-southeast1.run.app/predict', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
