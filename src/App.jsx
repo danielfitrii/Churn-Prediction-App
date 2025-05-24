@@ -24,22 +24,6 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-function FirestoreTestButton() {
-  const handleTest = async () => {
-    try {
-      const userId = await registerUser('testuser@example.com', 'testpassword123');
-      alert('User created with ID: ' + userId);
-    } catch (err) {
-      alert('Error: ' + err.message);
-    }
-  };
-  return (
-    <button onClick={handleTest} style={{marginBottom: 16, padding: '8px 16px', background: '#2563eb', color: 'white', borderRadius: 6}}>
-      Test Firestore Register
-    </button>
-  );
-}
-
 const Layout = () => {
   const location = useLocation();
   const { user } = useAuth();
@@ -66,8 +50,6 @@ const Layout = () => {
       <Header isExpanded={isSidebarExpanded} />
       <main className="pt-16 transition-all duration-300 ease-in-out" style={{ marginLeft: isSidebarExpanded ? '16rem' : '5rem' }}>
         <div className="p-6">
-          {/* Firestore test button for development only */}
-          <FirestoreTestButton />
           <Routes>
             <Route
               path="/"
@@ -93,7 +75,14 @@ const Layout = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="/settings" element={<Settings />} />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/profile/edit"
               element={

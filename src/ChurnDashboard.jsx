@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from "recharts";
 import { FaUsers, FaChartLine, FaClock, FaDollarSign, FaSearch } from "react-icons/fa";
-import { collection, getDocs, doc, getDoc, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import { useAuth } from './context/AuthContext';
 
 export default function ChurnDashboard() {
+  const { user } = useAuth();
   const [statistics, setStatistics] = useState({
     totalCustomers: 0,
     churnRate: 0,
@@ -40,9 +42,26 @@ export default function ChurnDashboard() {
 
   // Simulate data loading with real-time listeners
   useEffect(() => {
+    if (!user?.uid) {
+      // Reset dashboard state when user logs out or changes
+      setStatistics({
+        totalCustomers: 0,
+        churnRate: 0,
+        averageTenure: 0,
+        averageMonthlyCharges: 0,
+        recentPredictions: []
+      });
+      setMonthlyChurnData([]);
+      setQuarterlyChurnData([]);
+      setYearlyChurnData([]);
+      setChurnByFactorData([]);
+      setChurnBySegmentData([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
 
-    // Listener for Total Customers from metadata
+    // Listener for Total Customers from metadata (optional: you may want to make this user-specific too)
     const counterRef = doc(db, 'metadata', 'counters');
     const unsubscribeCounter = onSnapshot(counterRef, (docSnapshot) => {
       const totalCustomers = docSnapshot.exists() ? docSnapshot.data().customerCount || 0 : 0;
@@ -52,16 +71,21 @@ export default function ChurnDashboard() {
       }));
     }, (error) => {
       console.error("Error listening to counter document:", error);
-      // Handle error if necessary
     });
 
-    // Listener for all Predictions (for overall stats and charts)
-    const predictionsCollectionRef = collection(db, 'predictions');
-    const unsubscribeAllPredictions = onSnapshot(predictionsCollectionRef, (querySnapshot) => {
+    // Listener for all Predictions (for overall stats and charts) - USER SPECIFIC
+    const predictionsQuery = query(collection(db, 'predictions'), where('userId', '==', user.uid));
+    const unsubscribeAllPredictions = onSnapshot(predictionsQuery, (querySnapshot) => {
       let totalTenure = 0;
       let totalMonthlyCharges = 0;
       let totalChurnProbability = 0;
       const totalPredictions = querySnapshot.size;
+
+      // Set user-specific total customers
+      setStatistics(prevStats => ({
+        ...prevStats,
+        totalCustomers: totalPredictions
+      }));
 
       // Process data for overall statistics and charts
       const monthly = {};
@@ -120,6 +144,9 @@ export default function ChurnDashboard() {
 
         // Data for Churn Factors and Segments charts (counting churned customers > 50% probability)
         if (churnProbability > 50) {
+           // DEBUG: Log tenure value and type
+           const tenureNum = Number(tenure) || 0;
+           console.log('DEBUG tenure:', tenure, typeof tenure, 'Parsed:', tenureNum);
            churnedCustomersCount++; // Increment count of churned customers
 
           // Churn Factors (Example: Contract Type - Month-to-month)
@@ -151,8 +178,8 @@ export default function ChurnDashboard() {
 
           // Churn by Segment (Example: Tenure)
           let segmentName;
-          if (tenure < 6) segmentName = "New Customers (<6mo)";
-          else if (tenure >= 6 && tenure <= 24) segmentName = "Regular (6mo-2yr)";
+          if (tenureNum < 6) segmentName = "New Customers (<6mo)";
+          else if (tenureNum >= 6 && tenureNum <= 24) segmentName = "Regular (6mo-2yr)";
           else segmentName = "Loyal (>2yr)";
 
           if (!segments[segmentName]) segments[segmentName] = { count: 0, name: segmentName };
@@ -211,13 +238,18 @@ export default function ChurnDashboard() {
          }))
          .sort((a, b) => b.value - a.value); // Sort by value (percentage)
 
-       const formatSegmentData = (data) => Object.entries(data)
+      // Sort segments in the desired order
+      const segmentOrder = [
+        "New Customers (<6mo)",
+        "Regular (6mo-2yr)",
+        "Loyal (>2yr)"
+      ];
+      const formatSegmentData = (data) => Object.entries(data)
          .map(([name, item]) => ({
             name,
             value: churnedCustomersCount > 0 ? parseFloat(((item.count / churnedCustomersCount) * 100).toFixed(1)) : 0,
          }))
-         .sort((a, b) => a.name.localeCompare(b.name)); // Sort by segment name
-
+         .sort((a, b) => segmentOrder.indexOf(a.name) - segmentOrder.indexOf(b.name));
 
       setMonthlyChurnData(formatTrendData(monthly));
       setQuarterlyChurnData(formatTrendData(quarterly));
@@ -233,6 +265,7 @@ export default function ChurnDashboard() {
             customer: data.customerInfo?.name || 'N/A',
             probability: parseFloat(data.prediction?.churnProbability) || 0,
             status: data.prediction?.riskLevel || 'N/A',
+            model: data.prediction?.model || 'N/A',
             date: data.timestamp?.toDate().toLocaleDateString() || 'N/A',
         };
       });
@@ -264,7 +297,7 @@ export default function ChurnDashboard() {
       // REMOVED: unsubscribeRecentPredictions();
     };
 
-  }, []); // Empty dependency array means this effect runs once on mount and cleans up on unmount
+  }, [user]); // Empty dependency array means this effect runs once on mount and cleans up on unmount
 
   // Get chart data based on selected timeframe
   const getChartData = () => {
@@ -477,12 +510,13 @@ export default function ChurnDashboard() {
               </div>
               <div className="overflow-x-auto overflow-y-auto h-80">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Probability</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Customer</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Probability</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Model</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -496,10 +530,11 @@ export default function ChurnDashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{prediction.date}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{prediction.probability}%</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{prediction.model}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${prediction.status === "Low Risk" ? "bg-green-100 text-green-800" :
-                              prediction.status === "Medium Risk" ? "bg-yellow-100 text-yellow-800" :
+                            ${prediction.status === "Low" ? "bg-green-100 text-green-800" :
+                              prediction.status === "Medium" ? "bg-yellow-100 text-yellow-800" :
                                 "bg-red-100 text-red-800"}`}>
                             {prediction.status}
                           </span>
