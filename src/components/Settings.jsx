@@ -13,7 +13,7 @@ const Settings = () => {
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
-
+  
   const handleSave = () => {
     updateSettings(localSettings);
     setSaveMessage('Settings saved successfully!');

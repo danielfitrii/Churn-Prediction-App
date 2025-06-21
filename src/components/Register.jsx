@@ -35,8 +35,8 @@ const Register = () => {
   };
 
   const validatePassword = (password) => {
-    // Password must contain at least 8 characters, one uppercase letter, one lowercase letter, and one number
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+    // Password must contain at least 8 characters, one uppercase letter, one lowercase letter, and one number (symbols allowed)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     return passwordRegex.test(password);
   };
 
