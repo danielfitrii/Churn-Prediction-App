@@ -12,10 +12,9 @@ const processData = (shapData, featureData, valuesData) => {
     const sampledValuesData = sampleData(valuesData);
 
     // Calculate feature importance more efficiently
-    const featureImportance = featureData.map(feature => {
-        // Use reduce instead of map + reduce for better performance
+    const featureImportance = featureData.map((feature, idx) => {
         const meanAbsShap = sampledShapData.reduce((sum, sample) => 
-            sum + Math.abs(sample[feature]), 0) / sampledShapData.length;
+            sum + Math.abs(sample[idx]), 0) / sampledShapData.length;
         return { feature, meanAbsShap };
     });
 

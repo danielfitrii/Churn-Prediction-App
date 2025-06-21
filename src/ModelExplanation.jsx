@@ -72,8 +72,8 @@ const processModelData = async (modelName) => {
         const sampledShapData = sampleData(shapData);
         const sampledValuesData = sampleData(valuesData);
 
-        const featureImportance = featureData.map(feature => {
-            const absShapValues = sampledShapData.map(sample => Math.abs(sample[feature]));
+        const featureImportance = featureData.map((feature, idx) => {
+            const absShapValues = sampledShapData.map(sample => Math.abs(sample[idx]));
             const meanAbsShap = absShapValues.reduce((sum, val) => sum + val, 0) / absShapValues.length;
             return { feature, meanAbsShap };
         });
@@ -213,7 +213,7 @@ export default function ModelExplanation() {
             description:
                 "Simple, fast, and interpretable model that estimates churn probability using weighted linear combinations of input features.",
             type: "Classification",
-            pipeline: "Preprocessing → RFE → Tomek Links → Logistic Regression → Threshold Tuning",
+            pipeline: "Preprocessing → One-Hot Encoding & Feature Selection → Tomek Links (Undersampling) → Train-Test Split → Logistic Regression (with class weighting) → Hyperparameter Tuning (RandomizedSearchCV) → Threshold Tuning & Evaluation",
             features: [
                 { feature: "Contract_Two year", importance: 2 },
                 { feature: "InternetService_No", importance: 1 },
@@ -231,10 +231,10 @@ export default function ModelExplanation() {
                 { feature: "TotalCharges", importance: 0 }
             ],
             metrics: {
-                accuracy: "78.0%",
-                precision: "56.0%",
-                recall: "74.0%",
-                f1: "64.0%"
+                accuracy: "76.0%",
+                precision: "54.0%",
+                recall: "75.0%",
+                f1: "63.0%"
             },
         },
         "Random Forest": {
@@ -242,7 +242,7 @@ export default function ModelExplanation() {
             description:
                 "Ensemble of decision trees that captures complex patterns in customer behavior for churn prediction.",
             type: "Classification",
-            pipeline: "Preprocessing → RFE → ADASYN → Random Forest → Threshold Tuning",
+            pipeline: "Preprocessing → One-Hot Encoding & Feature Selection → Tomek Links (Undersampling) → Train-Test Split → Random Forest (with class weighting) → Hyperparameter Tuning (RandomizedSearchCV) → Threshold Tuning & Evaluation",
             features: [
                 { feature: "tenure", importance: 24 },
                 { feature: "MonthlyCharges", importance: 14 },
@@ -260,10 +260,10 @@ export default function ModelExplanation() {
                 { feature: "PaymentMethod_Mailed check", importance: 1 }
             ],
             metrics: {
-                accuracy: "76.0%",
-                precision: "55.0%",
-                recall: "62.0%",
-                f1: "58.0%"
+                accuracy: "73.0%",
+                precision: "50.0%",
+                recall: "83.0%",
+                f1: "62.0%"
             },
         },
     };
@@ -488,34 +488,37 @@ export default function ModelExplanation() {
 
                     {shapValues.length && featureNames.length && featureValues.length && sortedFeatureNames.length ? (
                         <Plot
-                            data={sortedFeatureNames.map((feature, i) => ({
-                                type: "scatter",
-                                mode: "markers",
-                                x: shapValues.map(sample => sample[feature]),
-                                y: Array(shapValues.length).fill(feature),
-                                name: feature,
-                                marker: {
-                                    color: featureValues.map(sample => sample[feature]),
-                                    colorscale: 'RdBu',
-                                    showscale: i === 0,
-                                    colorbar: i === 0 ? {
-                                        title: 'Feature value',
-                                        thickness: 15,
-                                        x: 1.05,
-                                    } : undefined,
-                                    size: 4,
-                                    opacity: 0.6,
-                                    line: {
-                                        width: 0.2,
-                                        color: 'gray'
-                                    }
-                                },
-                                hovertemplate: 
-                                    '<b>%{y}</b><br>' +
-                                    'SHAP Value: %{x:.3f}<br>' +
-                                    'Feature Value: %{marker.color:.3f}<br>' +
-                                    '<extra></extra>'
-                            }))}
+                            data={sortedFeatureNames.map((feature, i) => {
+                                const featureIdx = featureNames.indexOf(feature);
+                                return {
+                                    type: "scatter",
+                                    mode: "markers",
+                                    x: shapValues.map(sample => sample[featureIdx]),
+                                    y: Array(shapValues.length).fill(feature),
+                                    name: feature,
+                                    marker: {
+                                        color: featureValues.map(sample => sample[featureIdx]),
+                                        colorscale: 'RdBu',
+                                        showscale: i === 0,
+                                        colorbar: i === 0 ? {
+                                            title: 'Feature value',
+                                            thickness: 15,
+                                            x: 1.05,
+                                        } : undefined,
+                                        size: 4,
+                                        opacity: 0.6,
+                                        line: {
+                                            width: 0.2,
+                                            color: 'gray'
+                                        }
+                                    },
+                                    hovertemplate: 
+                                        '<b>%{y}</b><br>' +
+                                        'SHAP Value: %{x:.3f}<br>' +
+                                        'Feature Value: %{marker.color:.3f}<br>' +
+                                        '<extra></extra>'
+                                };
+                            })}
                             layout={{
                                 title: "SHAP Value Distribution per Feature",
                                 xaxis: { 
