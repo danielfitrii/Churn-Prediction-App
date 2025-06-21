@@ -5,6 +5,7 @@ import { collection, getDocs, doc, getDoc, query, orderBy, limit, onSnapshot, wh
 import { db } from './firebaseConfig';
 import { useAuth } from './context/AuthContext';
 import MockDataButton from './components/MockDataButton';
+import { toast } from 'react-toastify';
 
 
 export default function ChurnDashboard() {
@@ -645,8 +646,50 @@ export default function ChurnDashboard() {
 
             {/* Recent Predictions Table */}
             <div className="col-span-2 bg-white p-6 rounded-lg shadow border border-gray-200">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Recent Churn Predictions</h2>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">Recent Churn Predictions</h2>
+                  <button
+                    onClick={async () => {
+                      if (!user?.uid) return;
+                      try {
+                        const predictionsQuery = query(collection(db, 'predictions'), where('userId', '==', user.uid));
+                        const querySnapshot = await getDocs(predictionsQuery);
+                        const predictions = querySnapshot.docs.map(doc => doc.data());
+                        if (predictions.length === 0) {
+                          toast.info('No predictions found to export.');
+                          return;
+                        }
+                        // Map to table columns and format
+                        const tableRows = predictions.map(data => ({
+                          Customer: data.customerInfo?.name || 'N/A',
+                          Region: data.customerInfo?.region || 'N/A',
+                          Date: data.timestamp?.toDate ? data.timestamp.toDate().toLocaleDateString() : 'N/A',
+                          Probability: (parseFloat(data.prediction?.churnProbability) || 0) + '%',
+                          Model: data.prediction?.model || 'N/A',
+                          Status: data.prediction?.riskLevel || 'N/A',
+                        }));
+                        const csvHeaders = Object.keys(tableRows[0]).join(',');
+                        const csvRows = tableRows.map(row => Object.values(row).map(val => typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val).join(','));
+                        const csvContent = [csvHeaders, ...csvRows].join('\n');
+                        const blob = new Blob([csvContent], { type: 'text/csv' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'my_churn_predictions.csv';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                      } catch (err) {
+                        toast.error('Failed to export predictions.');
+                      }
+                    }}
+                    className="mt-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md text-sm font-medium transition-colors duration-200 shadow-sm"
+                  >
+                    Download My Data
+                  </button>
+                </div>
                 <div className="relative">
                   <input
                     type="text"

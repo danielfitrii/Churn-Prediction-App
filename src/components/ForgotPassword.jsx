@@ -63,10 +63,10 @@ const ForgotPassword = () => {
 
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className={`mt-6 text-center text-3xl font-extrabold ${settings.darkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-50`}>
             Send Password Reset Link
           </h2>
-          <p className={`mt-2 text-center text-sm ${settings.darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          <p className={`mt-2 text-center text-sm text-gray-600 dark:text-gray-300`}>
             Enter your email to receive a reset link.
           </p>
         </div>
@@ -74,8 +74,8 @@ const ForgotPassword = () => {
           {settings.notificationType === 'builtin' && status.message && (
             <div className={`rounded-md p-4 ${
               status.type === 'error'
-                ? 'bg-red-100 border border-red-400 text-red-700'
-                : 'bg-green-100 border border-green-400 text-green-700'
+                ? 'bg-red-100 border border-red-400 text-red-700 dark:text-red-300'
+                : 'bg-green-100 border border-green-400 text-green-700 dark:text-green-300'
             }`} role="alert">
               <span className="block sm:inline">{status.message}</span>
             </div>

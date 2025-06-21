@@ -8,7 +8,6 @@ import { toast } from 'react-toastify';
 
 export default function ChurnPredictionApp() {
   const { user } = useAuth();
-  const { settings } = useSettings();
   const [formData, setFormData] = useState({
     tenure: 12,
     monthlyCharges: 70,
@@ -48,6 +47,8 @@ export default function ChurnPredictionApp() {
   const isCustomerInfoComplete = customerInfo.name && customerInfo.gender && customerInfo.age && customerInfo.region;
 
   const warningRef = useRef(null);
+
+  const { settings } = useSettings();
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -110,6 +111,7 @@ export default function ChurnPredictionApp() {
       };
       
       setPrediction(predictionResult);
+
       // Show notification on prediction success
       if (settings.notificationType === 'toast') {
         toast.success('Prediction completed!');
@@ -334,7 +336,7 @@ export default function ChurnPredictionApp() {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">
+                <h3 className="text-sm font-semibold text-blue-800">
                   {selectedModel === "logistic" ? "Logistic Regression" : "Random Forest"} Model
                 </h3>
                 <div className="mt-2 text-sm text-blue-700">
@@ -545,7 +547,7 @@ export default function ChurnPredictionApp() {
               </button>
               {(!isCustomerInfoComplete && !loading) && (
                 <div className="mt-2 text-sm text-yellow-600 text-center">
-                  Please fill in all customer data to enable prediction.
+                  Please fill in all customer basic information to enable prediction.
                 </div>
               )}
             </div>
@@ -676,6 +678,7 @@ export default function ChurnPredictionApp() {
           </div>
         </div>
       </div>
+
       {settings.notificationType === 'builtin' && prediction?.notificationMessage && (
         <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
           {prediction.notificationMessage}

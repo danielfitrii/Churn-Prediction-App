@@ -5,6 +5,8 @@ import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePasswor
 import { Tooltip } from 'react-tooltip';
 import { FiHelpCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { db } from '../firebaseConfig';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const EditProfile = () => {
   const { user, updateUserProfile } = useAuth();
@@ -13,6 +15,7 @@ const EditProfile = () => {
   const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [showToast, setShowToast] = useState(false);
 
   const [formData, setFormData] = useState({
     email: user?.email || '',
@@ -154,19 +157,16 @@ const EditProfile = () => {
           setSuccess('Profile and password updated successfully!');
         }
       } else if (formData.newPassword || formData.currentPassword) {
-         // Handle case where only one password field is filled during password change attempt
          setErrors({ passwordChange: 'Both current and new password are required to change password.' });
          setLoading(false);
          return;
+      } else {
+        if (settings.notificationType === 'toast') {
+          toast.success('Profile updated successfully!');
+        } else if (settings.notificationType === 'builtin') {
+          setSuccess('Profile updated successfully!');
+        }
       }
-       else {
-         // If no new password was provided, only profile was updated
-         if (settings.notificationType === 'toast') {
-           toast.success('Profile updated successfully!');
-         } else if (settings.notificationType === 'builtin') {
-           setSuccess('Profile updated successfully!');
-         }
-       }
 
       // Clear password fields after successful update (or if no new password was attempted)
       setFormData(prev => ({
@@ -210,9 +210,15 @@ const EditProfile = () => {
   };
 
   return (
-    <div className={`max-w-4xl mx-auto ${settings.darkMode ? 'text-white' : 'text-gray-800'}`}>
+    <div className={`max-w-4xl mx-auto text-gray-800 dark:text-gray-50`}>
       <div className={`${settings.darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6`}>
-        <h2 className="text-2xl font-bold mb-6">Profile Settings</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-50">Profile Settings</h2>
+
+        {showToast && (
+          <div className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+            Changes saved successfully!
+          </div>
+        )}
 
         {success && (
           <div className="mb-4 p-4 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 rounded-lg">

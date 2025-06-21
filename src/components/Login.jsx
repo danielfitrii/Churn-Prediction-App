@@ -11,12 +11,11 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loading } = useAuth();
+  const { login, loading, user } = useAuth();
   const { settings, updateSettings } = useSettings();
   const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const { user } = useAuth();
 
   const handleMouseDown = () => {
     setShowPassword(true);
@@ -121,19 +120,19 @@ const Login = () => {
 
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className={`mt-6 text-center text-3xl font-extrabold ${settings.darkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-50`}>
             Sign in to your account
           </h2>
-          <p className={`mt-2 text-center text-sm ${settings.darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          <p className={`mt-2 text-center text-sm text-gray-600 dark:text-gray-300`}>
             Or{' '}
-            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
               create a new account
             </Link>
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <div className="bg-red-100 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded relative" role="alert">
               <span className="block sm:inline">{error}</span>
             </div>
           )}

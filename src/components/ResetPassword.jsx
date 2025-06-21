@@ -116,11 +116,11 @@ const ResetPassword = () => {
 
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className={`mt-6 text-center text-3xl font-extrabold ${settings.darkMode ? 'text-white' : 'text-gray-900'}`}>Set a New Password</h2>
-          <p className={`mt-2 text-center text-sm ${settings.darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Enter your new password below.</p>
+          <h2 className={`mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-50`}>Set a New Password</h2>
+          <p className={`mt-2 text-center text-sm text-gray-600 dark:text-gray-300`}>Enter your new password below.</p>
         </div>
         {settings.notificationType === 'builtin' && status.message && (
-          <div className={`rounded-md p-4 ${status.type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' : 'bg-green-100 border border-green-400 text-green-700'}`} role="alert">
+          <div className={`rounded-md p-4 ${status.type === 'error' ? 'bg-red-100 border border-red-400 text-red-700 dark:text-red-300' : 'bg-green-100 border border-green-400 text-green-700 dark:text-green-300'}`} role="alert">
             <span className="block sm:inline">{status.message}</span>
           </div>
         )}

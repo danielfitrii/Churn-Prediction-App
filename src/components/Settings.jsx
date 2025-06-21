@@ -6,7 +6,7 @@ import { Tooltip } from 'react-tooltip';
 import { toast } from 'react-toastify';
 
 const Settings = () => {
-  const { user, updateUserProfile } = useAuth();
+  const { user } = useAuth();
   const { settings, updateSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState(settings);
   const [saveMessage, setSaveMessage] = useState('');
@@ -14,12 +14,9 @@ const Settings = () => {
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
-  
-  const handleSave = async () => {
+
+  const handleSave = () => {
     updateSettings(localSettings);
-    if (user) {
-      await updateUserProfile({ emailUpdates: localSettings.emailUpdates });
-    }
     if (localSettings.notificationType === 'builtin') {
       setSaveMessage('Settings saved successfully!');
     } else {
@@ -95,32 +92,6 @@ const Settings = () => {
             </label>
           </div>
 
-          {/* Email Updates */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div>
-                <h3 className="text-lg font-medium">Enable Email Updates</h3>
-                <p className="text-sm text-gray-500">Receive email notifications for important updates.</p>
-              </div>
-              <FiHelpCircle 
-                className="text-gray-400 cursor-help"
-                data-tooltip-id="email-tooltip"
-                data-tooltip-content="Receive news and important information via email."
-              />
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={localSettings.emailUpdates}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, emailUpdates: e.target.checked }))}
-                onKeyPress={(e) => handleKeyPress(e, 'emailUpdates')}
-                aria-label="Toggle email updates"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
           {/* Save Message */}
           {saveMessage && (
             <div className="text-green-600 text-sm font-medium">{saveMessage}</div>
@@ -151,7 +122,6 @@ const Settings = () => {
       {/* Tooltips */}
       <Tooltip id="notifications-tooltip" />
       <Tooltip id="darkmode-tooltip" />
-      <Tooltip id="email-tooltip" />
     </div>
   );
 };
