@@ -654,7 +654,7 @@ export default function ChurnPredictionApp() {
           </form>
         </div>
 
-        <div className={`bg-gray-50 p-6 rounded-lg overflow-y-auto ${settings.showPredictionStrategy ? 'max-h-266' : ''}`}>
+        <div className={`bg-gray-50 p-6 rounded-lg overflow-y-auto ${settings.showPredictionStrategy ? 'max-h-268' : 'max-h-258'}`}>
           <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">Prediction Result</h2>
 
           {loading ? (
