@@ -7,7 +7,7 @@ export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState(() => {
     const savedSettings = localStorage.getItem('appSettings');
     return savedSettings ? JSON.parse(savedSettings) : {
-      notifications: true,
+      notificationType: 'toast', // 'toast', 'builtin', or 'none'
       darkMode: false,
       emailUpdates: true
     };

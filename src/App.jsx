@@ -15,6 +15,8 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { registerUser } from './firebaseHelpers';
 import { useState, useEffect } from 'react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -104,6 +106,7 @@ function App() {
       <SettingsProvider>
         <Router>
           <Layout />
+          <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
         </Router>
       </SettingsProvider>
     </AuthProvider>

@@ -4,6 +4,7 @@ import { useSettings } from '../context/SettingsContext';
 import { registerUser } from '../firebaseHelpers';
 import Logo from './Logo';
 import SettingsButtonWithModal from './SettingsButtonWithModal';
+import { toast } from 'react-toastify';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -70,7 +71,11 @@ const Register = () => {
         firstName: formData.firstName,
         lastName: formData.lastName
       });
-      setMessage("Account created! Redirecting to login...");
+      if (settings.notificationType === 'toast') {
+        toast.success('Account created! Redirecting to login...');
+      } else if (settings.notificationType === 'builtin') {
+        setMessage('Account created! Redirecting to login...');
+      }
       setRedirecting(true);
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
@@ -110,7 +115,7 @@ const Register = () => {
         </div>
 
         {/* Success message block */}
-        {message && (
+        {settings.notificationType === 'builtin' && message && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative flex items-center gap-2" role="alert">
             {redirecting && (
               <svg className="animate-spin h-5 w-5 text-green-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

@@ -4,6 +4,7 @@ import { useSettings } from '../context/SettingsContext';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import Logo from './Logo';
 import SettingsButtonWithModal from './SettingsButtonWithModal';
+import { toast } from 'react-toastify';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -34,10 +35,11 @@ const ForgotPassword = () => {
     try {
       const auth = getAuth();
       await sendPasswordResetEmail(auth, email.trim());
-      setStatus({
-        type: 'success',
-        message: 'Password reset email sent. Please check your inbox.',
-      });
+      if (settings.notificationType === 'toast') {
+        toast.success('Password reset email sent. Please check your inbox.');
+      } else if (settings.notificationType === 'builtin') {
+        setStatus({ type: 'success', message: 'Password reset email sent. Please check your inbox.' });
+      }
     } catch (error) {
       if (error.code === 'auth/user-not-found') {
         setStatus({ type: 'error', message: 'No account found with this email.' });
@@ -69,7 +71,7 @@ const ForgotPassword = () => {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {status.message && (
+          {settings.notificationType === 'builtin' && status.message && (
             <div className={`rounded-md p-4 ${
               status.type === 'error'
                 ? 'bg-red-100 border border-red-400 text-red-700'

@@ -4,6 +4,7 @@ import { useSettings } from '../context/SettingsContext';
 import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword as firebaseUpdatePassword } from 'firebase/auth';
 import { Tooltip } from 'react-tooltip';
 import { FiHelpCircle } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 
 const EditProfile = () => {
   const { user, updateUserProfile } = useAuth();
@@ -148,18 +149,22 @@ const EditProfile = () => {
         await reauthenticateWithCredential(currentUser, credential);
 
         await firebaseUpdatePassword(currentUser, formData.newPassword);
-        setSuccess('Profile and password updated successfully!');
-
+        if (settings.notificationType === 'toast') {
+          toast.success('Profile and password updated successfully!');
+        } else if (settings.notificationType === 'builtin') {
+          setSuccess('Profile and password updated successfully!');
+        }
       } else if (formData.newPassword || formData.currentPassword) {
-         // Handle case where only one password field is filled during password change attempt
          setErrors({ passwordChange: 'Both current and new password are required to change password.' });
          setLoading(false);
          return;
+      } else {
+        if (settings.notificationType === 'toast') {
+          toast.success('Profile updated successfully!');
+        } else if (settings.notificationType === 'builtin') {
+          setSuccess('Profile updated successfully!');
+        }
       }
-       else {
-         // If no new password was provided, only profile was updated
-         setSuccess('Profile updated successfully!');
-       }
 
       // Clear password fields after successful update (or if no new password was attempted)
       setFormData(prev => ({
@@ -169,8 +174,6 @@ const EditProfile = () => {
         confirmPassword: ''
       }));
 
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
       setHasChanges(false);
 
     } catch (error) {
