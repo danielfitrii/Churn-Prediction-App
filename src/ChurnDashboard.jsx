@@ -6,6 +6,7 @@ import { db } from './firebaseConfig';
 import { useAuth } from './context/AuthContext';
 import MockDataButton from './components/MockDataButton';
 import { toast } from 'react-toastify';
+import { LightBulbIcon } from '@heroicons/react/24/solid';
 
 
 export default function ChurnDashboard() {
@@ -186,28 +187,28 @@ export default function ChurnDashboard() {
 
           // Churn Factors (Example: Contract Type - Month-to-month)
           if (contract === "Month-to-month") { // Using >50% as churn for factors
-             if (!factors["Month-to-month Contract"]) factors["Month-to-month Contract"] = { count: 0, description: "No long-term commitment, higher flexibility for customers to switch" };
+             if (!factors["Month-to-month Contract"]) factors["Month-to-month Contract"] = { count: 0, description: "No long-term commitment, higher flexibility for customers to switch." };
              factors["Month-to-month Contract"].count++;
           }
           // Add other factors as needed based on your mock data and prediction features
           if (techSupport === "No") {
-            if (!factors["No Tech Support"]) factors["No Tech Support"] = { count: 0, description: "Lack of technical assistance for service issues" };
+            if (!factors["No Tech Support"]) factors["No Tech Support"] = { count: 0, description: "Lack of technical assistance for service issues." };
             factors["No Tech Support"].count++;
           }
            if (internetService === "Fiber optic") {
-            if (!factors["Fiber Optic Internet"]) factors["Fiber Optic Internet"] = { count: 0, description: "Premium internet service with higher expectations" };
+            if (!factors["Fiber Optic Internet"]) factors["Fiber Optic Internet"] = { count: 0, description: "Premium internet service with higher expectations." };
             factors["Fiber Optic Internet"].count++;
           }
            if (paymentMethod === "Electronic check") {
-            if (!factors["Electronic Check"]) factors["Electronic Check"] = { count: 0, description: "Manual recurring billing method requiring monthly action" };
+            if (!factors["Electronic Check"]) factors["Electronic Check"] = { count: 0, description: "Manual recurring billing method requiring monthly action." };
             factors["Electronic Check"].count++;
           }
           if (onlineSecurity === "No") {
-            if (!factors["No Online Security"]) factors["No Online Security"] = { count: 0, description: "Missing essential security features for online protection" };
+            if (!factors["No Online Security"]) factors["No Online Security"] = { count: 0, description: "Missing essential security features for online protection." };
             factors["No Online Security"].count++;
           }
           if (monthlyCharges > 80) { // Example threshold for high charges
-             if (!factors["High Monthly Charge"]) factors["High Monthly Charge"] = { count: 0, description: "Premium pricing above market average" };
+             if (!factors["High Monthly Charge"]) factors["High Monthly Charge"] = { count: 0, description: "Premium pricing above market average." };
              factors["High Monthly Charge"].count++;
           }
 
@@ -495,40 +496,8 @@ export default function ChurnDashboard() {
     <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold text-blue-700">Customer Churn Dashboard</h1>
-
-        <div className="flex space-x-3">
-          <button
-            className={`px-4 py-2 rounded-md transition-all duration-200 ${timeframe === "month"
-              ? "bg-blue-600 text-white font-bold shadow-lg"
-              : "bg-gray-200 hover:bg-gray-300"
-              }`}
-            onClick={() => setTimeframe("month")}
-          >
-            Monthly
-          </button>
-          <button
-            className={`px-4 py-2 rounded-md transition-all duration-200 ${timeframe === "quarter"
-              ? "bg-blue-600 text-white font-bold shadow-lg"
-              : "bg-gray-200 hover:bg-gray-300"
-              }`}
-            onClick={() => setTimeframe("quarter")}
-          >
-            Quarterly
-          </button>
-          <button
-            className={`px-4 py-2 rounded-md transition-all duration-200 ${timeframe === "year"
-              ? "bg-blue-600 text-white font-bold shadow-lg"
-              : "bg-gray-200 hover:bg-gray-300"
-              }`}
-            onClick={() => setTimeframe("year")}
-          >
-            Yearly
-          </button>
-        </div>
-      </div>
-
-      <div className="flex justify-end mb-4">
-        <MockDataButton />
+        {/* Show MockDataButton only for demo@example.com */}
+        {user?.email === 'demo@example.com' && <MockDataButton />}
       </div>
 
       {loading ? (
@@ -838,8 +807,11 @@ export default function ChurnDashboard() {
       )}
       {/* Move Overall Insights Section to below */}
       <div className="mt-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-        <h3 className="font-bold text-yellow-800 mb-2">Overall Insights</h3>
-        <ul className="list-disc pl-5 text-yellow-900">
+        <h3 className="font-bold text-yellow-800 mb-2 flex items-center gap-2">
+          <LightBulbIcon className="h-4 w-4 text-yellow-500" />
+          Overall Insights
+        </h3>
+        <ul className="list-disc pl-5.5 text-yellow-900">
           {getDashboardInsights().map((insight, idx) => (
             <li key={idx}>{insight}</li>
           ))}
