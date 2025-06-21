@@ -4,6 +4,8 @@ import { FaUsers, FaChartLine, FaClock, FaDollarSign, FaSearch } from "react-ico
 import { collection, getDocs, doc, getDoc, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import { useAuth } from './context/AuthContext';
+import MockDataButton from './components/MockDataButton';
+
 
 export default function ChurnDashboard() {
   const { user } = useAuth();
@@ -455,6 +457,10 @@ export default function ChurnDashboard() {
             Yearly
           </button>
         </div>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <MockDataButton />
       </div>
 
       {loading ? (

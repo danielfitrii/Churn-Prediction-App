@@ -211,6 +211,7 @@ export default function ChurnPredictionApp() {
         <p className="text-gray-600 text-lg">Predict whether a customer is likely to churn based on their usage profile</p>
       </div>
       <div className="mb-6 p-4 bg-blue-50 rounded-lg shadow flex flex-col items-center justify-center">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Customer Basic Information</h2>
         <form className="flex flex-col md:flex-row md:space-x-4 items-center w-full justify-center">
           <div className="mb-2 md:mb-0 w-48">
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
