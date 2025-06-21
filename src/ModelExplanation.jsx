@@ -35,12 +35,14 @@ const modelJsonFiles = {
     "Logistic Regression": {
         shap: "/shap_values_lr.json",
         features: "/feature_names_lr.json",
-        values: "/feature_values_lr.json"
+        values: "/feature_values_lr.json",
+        importance: "/feature_importance_lr.json"
     },
     "Random Forest": {
         shap: "/shap_values_rf.json",
         features: "/feature_names_rf.json",
-        values: "/feature_values_rf.json"
+        values: "/feature_values_rf.json",
+        importance: "/feature_importance_rf.json"
     }
 };
 
@@ -103,6 +105,7 @@ export default function ModelExplanation() {
     const [featureValues, setFeatureValues] = useState([]);
     const [sortedFeatureNames, setSortedFeatureNames] = useState([]);
     const [error, setError] = useState(null);
+    const [featureImportances, setFeatureImportances] = useState([]);
     
     // Create a ref for the worker
     const workerRef = useRef(null);
@@ -186,6 +189,24 @@ export default function ModelExplanation() {
         setSelectedModel(modelName);
     };
 
+    // Fetch feature importances when model changes
+    useEffect(() => {
+        const fetchImportances = async () => {
+            try {
+                const res = await fetch(modelJsonFiles[selectedModel].importance);
+                if (!res.ok) throw new Error('Not found');
+                const data = await res.json();
+                // Convert object to array for recharts
+                const arr = Object.entries(data).map(([feature, importance]) => ({ feature, importance }));
+                setFeatureImportances(arr);
+            } catch (e) {
+                // fallback to hardcoded importances if fetch fails
+                setFeatureImportances(modelData[selectedModel].features);
+            }
+        };
+        fetchImportances();
+    }, [selectedModel]);
+
     const modelData = {
         "Logistic Regression": {
             name: "Logistic Regression",
@@ -194,14 +215,20 @@ export default function ModelExplanation() {
             type: "Classification",
             pipeline: "Preprocessing → RFE → Tomek Links → Logistic Regression → Threshold Tuning",
             features: [
-                { feature: "tenure", importance: 24 },
-                { feature: "Total Charges", importance: 21 },
-                { feature: "Internet Service", importance: 20 },
-                { feature: "Contract Type", importance: 19 },
-                { feature: "Online Security", importance: 12 },
-                { feature: "Tech Support", importance: 10 },
-                { feature: "Streaming TV", importance: 8 },
-                { feature: "Paperless Billing", importance: 6 }
+                { feature: "Contract_Two year", importance: 2 },
+                { feature: "InternetService_No", importance: 1 },
+                { feature: "Contract_One year", importance: 1 },
+                { feature: "InternetService_Fiber optic", importance: 1 },
+                { feature: "PaymentMethod_Electronic check", importance: 1 },
+                { feature: "OnlineSecurity_Yes", importance: 0 },
+                { feature: "StreamingTV_Yes", importance: 0 },
+                { feature: "TechSupport_Yes", importance: 0 },
+                { feature: "PaperlessBilling_Yes", importance: 0 },
+                { feature: "PaymentMethod_Mailed check", importance: 0 },
+                { feature: "PaymentMethod_Credit card (automatic)", importance: 0 },
+                { feature: "tenure", importance: 0 },
+                { feature: "MonthlyCharges", importance: 0 },
+                { feature: "TotalCharges", importance: 0 }
             ],
             metrics: {
                 accuracy: "78.0%",
@@ -217,14 +244,20 @@ export default function ModelExplanation() {
             type: "Classification",
             pipeline: "Preprocessing → RFE → ADASYN → Random Forest → Threshold Tuning",
             features: [
-                { feature: "Total Charges", importance: 21 },
-                { feature: "Monthly Charges", importance: 19 },
-                { feature: "Tenure", importance: 17 },
-                { feature: "Payment Method", importance: 13 },
-                { feature: "Internet Service", importance: 11 },
-                { feature: "Paperless Billing", importance: 9 },
-                { feature: "Contract Type", importance: 8 },
-                { feature: "Streaming TV", importance: 6 }
+                { feature: "tenure", importance: 24 },
+                { feature: "MonthlyCharges", importance: 14 },
+                { feature: "TotalCharges", importance: 14 },
+                { feature: "Contract_Two year", importance: 11 },
+                { feature: "InternetService_Fiber optic", importance: 10 },
+                { feature: "PaymentMethod_Electronic check", importance: 7 },
+                { feature: "InternetService_No", importance: 6 },
+                { feature: "Contract_One year", importance: 5 },
+                { feature: "OnlineSecurity_Yes", importance: 3 },
+                { feature: "TechSupport_Yes", importance: 2 },
+                { feature: "PaperlessBilling_Yes", importance: 2 },
+                { feature: "StreamingTV_Yes", importance: 1 },
+                { feature: "PaymentMethod_Credit card (automatic)", importance: 1 },
+                { feature: "PaymentMethod_Mailed check", importance: 1 }
             ],
             metrics: {
                 accuracy: "76.0%",
@@ -236,6 +269,24 @@ export default function ModelExplanation() {
     };
 
     const model = modelData[selectedModel];
+
+    // Short display names for features
+    const featureDisplayNames = {
+        "tenure": "Tenure",
+        "MonthlyCharges": "MonthlyCharges",
+        "TotalCharges": "TotalCharges",
+        "Contract_Two year": "2yr Contract",
+        "InternetService_Fiber optic": "InternetService_Fiber",
+        "PaymentMethod_Electronic check": "PaymentMethod_Electronic",
+        "InternetService_No": "InternetService_No",
+        "Contract_One year": "1yr Contract",
+        "OnlineSecurity_Yes": "OnlineSecurity_Yes",
+        "TechSupport_Yes": "TechSupport_Yes",
+        "PaperlessBilling_Yes": "PaperlessBilling_Yes",
+        "StreamingTV_Yes": "StreamingTV_Yes",
+        "PaymentMethod_Credit card (automatic)": "PaymentMethod_Credit",
+        "PaymentMethod_Mailed check": "PaymentMethod_Mailed"
+    };
 
     if (loading) {
         return (
@@ -314,52 +365,57 @@ export default function ModelExplanation() {
                         Feature Importance
                     </h2>
 
-                    {model.features && model.features.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart
-                                data={model.features}
-                                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis 
-                                    dataKey="feature" 
-                                    tick={{ fontSize: 12 }}
-                                    interval={0}
-                                />
-                                <YAxis 
-                                    domain={[0, 25]}
-                                    ticks={[0, 5, 10, 15, 20, 25]}
-                                />
-                                <Tooltip 
-                                    formatter={(value) => [`${value}%`, "Importance"]}
-                                    contentStyle={{
-                                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                        border: '1px solid #ccc',
-                                        borderRadius: '4px',
-                                        padding: '8px'
-                                    }}
-                                />
-                                <Bar dataKey="importance">
-                                    {model.features.map((entry, index) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={
-                                                [
-                                                    "#60a5fa",
-                                                    "#34d399",
-                                                    "#fbbf24",
-                                                    "#f87171",
-                                                    "#a78bfa",
-                                                    "#f472b6",
-                                                    "#38bdf8",
-                                                    "#fb923c",
-                                                ][index % 8]
-                                            }
+                    {featureImportances && featureImportances.length > 0 ? (
+                        <div className="flex justify-center">
+                            <div style={{ width: '100%', maxWidth: 900 }}>
+                                <ResponsiveContainer width="100%" height={500}>
+                                    <BarChart
+                                        data={featureImportances}
+                                        margin={{ top: 20, right: 50, left: 50, bottom: 90 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis 
+                                            dataKey="feature" 
+                                            tick={{ fontSize: 12, angle: -45, textAnchor: 'end' }}
+                                            interval={0}
+                                            tickFormatter={name => featureDisplayNames[name] || name}
                                         />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
+                                        <YAxis 
+                                            domain={selectedModel === "Logistic Regression" ? [-2, 1] : [0, 0.25]}
+                                            ticks={selectedModel === "Logistic Regression" ? [-2, -1.5, -1, -0.5, 0, 0.5, 1] : [0, 0.05, 0.10, 0.15, 0.20, 0.25]}
+                                        />
+                                        <Tooltip 
+                                            formatter={(value) => [value, "Importance"]}
+                                            contentStyle={{
+                                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                                border: '1px solid #ccc',
+                                                borderRadius: '4px',
+                                                padding: '8px'
+                                            }}
+                                        />
+                                        <Bar dataKey="importance">
+                                            {featureImportances.map((entry, index) => (
+                                                <Cell
+                                                    key={`cell-${index}`}
+                                                    fill={
+                                                        [
+                                                            "#60a5fa",
+                                                            "#34d399",
+                                                            "#fbbf24",
+                                                            "#f87171",
+                                                            "#a78bfa",
+                                                            "#f472b6",
+                                                            "#38bdf8",
+                                                            "#fb923c",
+                                                        ][index % 8]
+                                                    }
+                                                />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
                     ) : (
                         <p className="text-gray-500">No feature importance data available.</p>
                     )}

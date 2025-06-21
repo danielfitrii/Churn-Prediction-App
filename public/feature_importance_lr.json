@@ -1,0 +1,16 @@
+{
+  "tenure": -0.05125913435890958,
+  "MonthlyCharges": -0.0008687477823226565,
+  "TotalCharges": 0.00024199949979252864,
+  "Contract_One year": -0.853182025415563,
+  "Contract_Two year": -1.5275147425491478,
+  "PaymentMethod_Credit card (automatic)": 0.0943848808884426,
+  "PaymentMethod_Electronic check": 0.5007680281730916,
+  "PaymentMethod_Mailed check": 0.09515744603544275,
+  "InternetService_Fiber optic": 0.8425557777097213,
+  "InternetService_No": -1.0758290747079537,
+  "OnlineSecurity_Yes": -0.4790238717873337,
+  "TechSupport_Yes": -0.41886246866003873,
+  "StreamingTV_Yes": 0.4455350250507671,
+  "PaperlessBilling_Yes": 0.3070953880830377
+}
