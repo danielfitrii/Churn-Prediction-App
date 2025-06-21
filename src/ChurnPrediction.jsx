@@ -13,6 +13,7 @@ export default function ChurnPrediction() {
     streamingTV: "Yes",
     paperlessBilling: "Yes",
   });
+  const [totalChargesOverridden, setTotalChargesOverridden] = useState(false);
 
   const [selectedModel, setSelectedModel] = useState("logistic");
   const [prediction, setPrediction] = useState(null);
@@ -35,12 +36,39 @@ export default function ChurnPrediction() {
     },
   });
 
+  // Auto-calculate totalCharges if not overridden
+  function autoUpdateTotalCharges(nextFormData) {
+    if (!totalChargesOverridden) {
+      return {
+        ...nextFormData,
+        totalCharges: Number(nextFormData.tenure) * Number(nextFormData.monthlyCharges)
+      };
+    }
+    return nextFormData;
+  }
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    let nextFormData = {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    });
+    };
+    // If user edits totalCharges, set override flag
+    if (name === "totalCharges") {
+      setTotalChargesOverridden(true);
+    } else if (name === "tenure" || name === "monthlyCharges") {
+      nextFormData = autoUpdateTotalCharges(nextFormData);
+    }
+    setFormData(nextFormData);
+  };
+
+  // Reset button to revert to auto-calc
+  const handleResetTotalCharges = () => {
+    setFormData((prev) => ({
+      ...prev,
+      totalCharges: Number(prev.tenure) * Number(prev.monthlyCharges)
+    }));
+    setTotalChargesOverridden(false);
   };
 
   const handleSubmit = (e) => {
@@ -145,13 +173,18 @@ export default function ChurnPrediction() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input name="tenure" label="Tenure (months)" value={formData.tenure} onChange={handleChange} />
               <Input name="monthlyCharges" label="Monthly Charges ($)" value={formData.monthlyCharges} onChange={handleChange} />
-              <Input name="totalCharges" label="Total Charges ($)" value={formData.totalCharges} onChange={handleChange} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Input name="totalCharges" label="Total Charges ($)" value={formData.totalCharges} onChange={handleChange} />
+                {totalChargesOverridden && (
+                  <button type="button" onClick={handleResetTotalCharges} className="ml-2 px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300">Reset</button>
+                )}
+              </div>
               <Select name="contract" label="Contract Type" value={formData.contract} onChange={handleChange}
                 options={["Month-to-month", "One year", "Two year"]} />
               <Select name="paymentMethod" label="Payment Method" value={formData.paymentMethod} onChange={handleChange}
                 options={["Electronic check", "Mailed check", "Bank transfer", "Credit card"]} />
               <Select name="internetService" label="Internet Service" value={formData.internetService} onChange={handleChange}
-                options={["DSL", "Fiber optic", "No"]} />
+                options={["DSL (Digital Subscriber Line)", "Fiber optic (High-speed fiber)", "No"]} />
               <Select name="onlineSecurity" label="Online Security" value={formData.onlineSecurity} onChange={handleChange}
                 options={["Yes", "No"]} />
               <Select name="techSupport" label="Tech Support" value={formData.techSupport} onChange={handleChange}

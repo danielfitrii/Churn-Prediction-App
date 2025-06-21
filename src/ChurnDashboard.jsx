@@ -424,6 +424,73 @@ export default function ChurnDashboard() {
       return sortOrder === 'desc' ? comparison * -1 : comparison;
   });
 
+  // Generate dynamic overall insights
+  function getDashboardInsights() {
+    const insights = [];
+    // Churn Rate
+    if (statistics.churnRate > 70) {
+      insights.push("Churn rate is very high. Immediate action is recommended.");
+    } else if (statistics.churnRate > 50) {
+      insights.push("Churn rate is above average. Consider reviewing retention strategies.");
+    } else if (statistics.churnRate > 0) {
+      insights.push("Churn rate is within a healthy range.");
+    } else {
+      insights.push("No churn data available yet.");
+    }
+    // Top Churn Factor
+    if (churnByFactorData.length > 0) {
+      const topFactor = churnByFactorData[0];
+      insights.push(`Top churn factor: ${topFactor.name} (${topFactor.value}%). ${topFactor.description || ''}`);
+    }
+    // Average Tenure
+    if (statistics.averageTenure < 12 && statistics.averageTenure > 0) {
+      insights.push("Most customers are relatively new (average tenure < 1 year).");
+    } else if (statistics.averageTenure >= 12) {
+      insights.push("Customer base has a healthy average tenure (>= 1 year).");
+    }
+    // Average Monthly Charges
+    if (statistics.averageMonthlyCharges > 80) {
+      insights.push("Average monthly charges are high. Consider if pricing impacts churn.");
+    }
+    // Most common region among recent predictions
+    if (statistics.recentPredictions && statistics.recentPredictions.length > 0) {
+      const regionCounts = {};
+      statistics.recentPredictions.forEach(pred => {
+        if (pred.region) regionCounts[pred.region] = (regionCounts[pred.region] || 0) + 1;
+      });
+      const mostCommonRegion = Object.entries(regionCounts).sort((a, b) => b[1] - a[1])[0];
+      if (mostCommonRegion) {
+        insights.push(`Most predictions are from the region: ${mostCommonRegion[0]}.`);
+      }
+    }
+    // Most common contract type among churned customers
+    if (statistics.recentPredictions && statistics.recentPredictions.length > 0) {
+      const contractCounts = {};
+      statistics.recentPredictions.forEach(pred => {
+        if (pred.status === 'High' && pred.model) {
+          contractCounts[pred.model] = (contractCounts[pred.model] || 0) + 1;
+        }
+      });
+      const mostCommonContract = Object.entries(contractCounts).sort((a, b) => b[1] - a[1])[0];
+      if (mostCommonContract) {
+        insights.push(`Most high-risk churn predictions used the model: ${mostCommonContract[0]}.`);
+      }
+    }
+    // Churn rate trend direction (if enough data)
+    if (monthlyChurnData && monthlyChurnData.length > 2) {
+      const last = monthlyChurnData[monthlyChurnData.length - 1].churnRate;
+      const prev = monthlyChurnData[monthlyChurnData.length - 2].churnRate;
+      if (last > prev) {
+        insights.push("Churn rate is increasing in the most recent period.");
+      } else if (last < prev) {
+        insights.push("Churn rate is decreasing in the most recent period.");
+      } else {
+        insights.push("Churn rate is stable in the most recent period.");
+      }
+    }
+    return insights;
+  }
+
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="flex justify-between items-center mb-8">
@@ -701,7 +768,7 @@ export default function ChurnDashboard() {
                   <FaSearch className="absolute left-3 top-3 text-gray-400" />
                 </div>
               </div>
-              <div className="overflow-x-auto overflow-y-auto h-180">
+              <div className="overflow-x-auto overflow-y-auto h-170">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
@@ -769,6 +836,15 @@ export default function ChurnDashboard() {
           </div>
         </>
       )}
+      {/* Move Overall Insights Section to below */}
+      <div className="mt-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+        <h3 className="font-bold text-yellow-800 mb-2">Overall Insights</h3>
+        <ul className="list-disc pl-5 text-yellow-900">
+          {getDashboardInsights().map((insight, idx) => (
+            <li key={idx}>{insight}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

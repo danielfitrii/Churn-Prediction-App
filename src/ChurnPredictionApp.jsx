@@ -20,6 +20,7 @@ export default function ChurnPredictionApp() {
     streamingTV: "Yes",
     paperlessBilling: "Yes",
   });
+  const [totalChargesOverridden, setTotalChargesOverridden] = useState(false);
 
   const [selectedModel, setSelectedModel] = useState("logistic");
   const [prediction, setPrediction] = useState(null);
@@ -52,12 +53,39 @@ export default function ChurnPredictionApp() {
 
   const [lastPredictedFormData, setLastPredictedFormData] = useState(null);
 
+  // Auto-calculate totalCharges if not overridden
+  function autoUpdateTotalCharges(nextFormData) {
+    if (!totalChargesOverridden) {
+      return {
+        ...nextFormData,
+        totalCharges: Number(nextFormData.tenure) * Number(nextFormData.monthlyCharges)
+      };
+    }
+    return nextFormData;
+  }
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    let nextFormData = {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    });
+    };
+    // If user edits totalCharges, set override flag
+    if (name === "totalCharges") {
+      setTotalChargesOverridden(true);
+    } else if (name === "tenure" || name === "monthlyCharges") {
+      nextFormData = autoUpdateTotalCharges(nextFormData);
+    }
+    setFormData(nextFormData);
+  };
+
+  // Reset button to revert to auto-calc
+  const handleResetTotalCharges = () => {
+    setFormData((prev) => ({
+      ...prev,
+      totalCharges: Number(prev.tenure) * Number(prev.monthlyCharges)
+    }));
+    setTotalChargesOverridden(false);
   };
 
   const handleModelChange = (model) => {
@@ -403,14 +431,19 @@ export default function ChurnPredictionApp() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Total Charges ($)
                   </label>
-                  <input
-                    type="number"
-                    name="totalCharges"
-                    value={formData.totalCharges}
-                    onChange={handleChange}
-                    className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    min="0"
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="number"
+                      name="totalCharges"
+                      value={formData.totalCharges}
+                      onChange={handleChange}
+                      className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      min="0"
+                    />
+                    {totalChargesOverridden && (
+                      <button type="button" onClick={handleResetTotalCharges} className="ml-2 px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300">Reset</button>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -462,7 +495,7 @@ export default function ChurnPredictionApp() {
                     onChange={handleChange}
                     className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="DSL">DSL</option>
+                    <option value="DSL">DSL (Digital Subscriber Line)</option>
                     <option value="Fiber optic">Fiber optic</option>
                     <option value="No">No</option>
                   </select>
