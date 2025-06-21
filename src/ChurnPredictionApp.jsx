@@ -53,6 +53,10 @@ export default function ChurnPredictionApp() {
 
   const [lastPredictedFormData, setLastPredictedFormData] = useState(null);
 
+  const [thresholdType, setThresholdType] = useState('f1'); // 'f1' or 'cost'
+
+  const showPredictionStrategy = settings.showPredictionStrategy; // Toggle to true to show the Prediction Strategy section
+
   // Auto-calculate totalCharges if not overridden
   function autoUpdateTotalCharges(nextFormData) {
     if (!totalChargesOverridden) {
@@ -133,12 +137,14 @@ export default function ChurnPredictionApp() {
         formData.paperlessBilling === "Yes" ? 1 : 0
       ];
       console.log('Encoded features:', encodedFeatures, 'Length:', encodedFeatures.length);
-      const result = await makePrediction(encodedFeatures, selectedModel);
+      const result = await makePrediction(encodedFeatures, selectedModel, thresholdType);
       
       const predictionResult = {
         churnProbability: (result.probability * 100).toFixed(1),
         riskLevel: result.probability < 0.3 ? 'Low' : result.probability < 0.7 ? 'Medium' : 'High',
-        model: selectedModel === 'logistic' ? 'Logistic Regression' : 'Random Forest'
+        model: selectedModel === 'logistic' ? 'Logistic Regression' : 'Random Forest',
+        thresholdType: result.threshold_type,
+        threshold: result.threshold
       };
       
       setPrediction(predictionResult);
@@ -191,7 +197,9 @@ export default function ChurnPredictionApp() {
             probability: result.probability,
             churnProbability: predictionResult.churnProbability,
             riskLevel: predictionResult.riskLevel,
-            model: predictionResult.model
+            model: predictionResult.model,
+            thresholdType: predictionResult.thresholdType,
+            threshold: predictionResult.threshold
           },
           userId: user?.uid,
           timestamp: serverTimestamp()
@@ -207,13 +215,15 @@ export default function ChurnPredictionApp() {
       setPrediction({
         churnProbability: 'Error',
         riskLevel: 'Error',
-        model: 'Error'
+        model: 'Error',
+        thresholdType: 'Error',
+        threshold: 'Error'
       });
     }
     setLoading(false);
   };
 
-  const makePrediction = async (features, model) => {
+  const makePrediction = async (features, model, thresholdType) => {
     try {
       // Use local backend URL in development, deployed URL in production
       const backendUrl = import.meta.env.DEV 
@@ -225,7 +235,7 @@ export default function ChurnPredictionApp() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ features, model }),
+        body: JSON.stringify({ features, model, threshold_type: thresholdType }),
       });
       const data = await response.json();
       if (data.error) {
@@ -233,7 +243,9 @@ export default function ChurnPredictionApp() {
       }
       return {
         prediction: data.prediction,
-        probability: data.probability
+        probability: data.probability,
+        threshold_type: data.threshold_type,
+        threshold: data.threshold
       };
     } catch (error) {
       console.error('Error making prediction:', error);
@@ -563,6 +575,58 @@ export default function ChurnPredictionApp() {
               </div>
             </div>
 
+            {showPredictionStrategy && (
+              <div className="mb-4 flex items-center whitespace-nowrap">
+                <label className="block text-gray-700 font-medium flex items-center mr-4 mb-0 whitespace-nowrap">
+                  <span className="relative group flex items-center">
+                    <svg
+                      className="h-5 w-5 text-blue-400 cursor-pointer mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      style={{ minWidth: '20px' }}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span className="absolute left-6 top-1 z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-3 py-2 w-72 shadow-lg whitespace-normal break-words">
+                      <b>Accurate (F1-optimized):</b> Best for achieving balanced and reliable predictions.<br /><br />
+                      <b>Cost-effective:</b> Designed to minimize business costs, even at the expense of more false positives.
+                    </span>
+                  </span>
+                  <span className="ml-1">Prediction Strategy:</span>
+                </label>
+                <div className="flex gap-4 items-center whitespace-nowrap">
+                  <label className="inline-flex items-center whitespace-nowrap">
+                    <input
+                      type="radio"
+                      className="form-radio"
+                      name="thresholdType"
+                      value="f1"
+                      checked={thresholdType === 'f1'}
+                      onChange={() => setThresholdType('f1')}
+                    />
+                    <span className="ml-2">Accurate (F1-optimized)</span>
+                  </label>
+                  <label className="inline-flex items-center whitespace-nowrap">
+                    <input
+                      type="radio"
+                      className="form-radio"
+                      name="thresholdType"
+                      value="cost"
+                      checked={thresholdType === 'cost'}
+                      onChange={() => setThresholdType('cost')}
+                    />
+                    <span className="ml-2">Cost-effective</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
             <div className="mt-6">
               <button
                 type="submit"
@@ -590,8 +654,8 @@ export default function ChurnPredictionApp() {
           </form>
         </div>
 
-        <div className="bg-gray-50 p-6 rounded-lg max-h-256 overflow-y-auto">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Prediction Result</h2>
+        <div className={`bg-gray-50 p-6 rounded-lg overflow-y-auto ${settings.showPredictionStrategy ? 'max-h-266' : ''}`}>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">Prediction Result</h2>
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
@@ -608,13 +672,18 @@ export default function ChurnPredictionApp() {
               }`}>
                 {prediction.churnProbability}%
               </div>
-              <div className="text-xl font-medium text-gray-700 mb-2">
+              <div className="text-xl font-medium text-gray-700 mb-2 text-center">
                 {prediction.riskLevel} Risk
               </div>
-              <div className="text-sm text-blue-600 font-medium mb-4">
+              <div className="text-sm text-blue-600 font-medium mb-4 text-center">
                 {prediction.model}
               </div>
-              <div className="text-sm text-gray-600 text-center max-w-md">
+              {prediction.thresholdType && (
+                <div className="text-sm text-gray-500 mb-2 text-center">
+                  Strategy: {prediction.thresholdType === 'f1' ? 'Accurate (F1-optimized)' : 'Cost-effective'} (Threshold: {prediction.threshold})
+                </div>
+              )}
+              <div className="text-base text-gray-600 max-w-md text-left">
                 {prediction.riskLevel === "Low" ? (
                   <p>This customer has a low probability of churning. Continue providing good service.</p>
                 ) : prediction.riskLevel === "Medium" ? (
@@ -625,11 +694,8 @@ export default function ChurnPredictionApp() {
               </div>
             </div>
           ) : (
-            <div className="h-64 flex flex-col items-center justify-center text-gray-400 text-center">
-              <svg className="h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-lg">Enter customer data and click "Predict Churn Risk" to see the prediction</p>
+            <div className="h-64 flex items-center justify-center text-gray-400 text-center">
+              <p>Enter customer data and click "Predict Churn Risk" to see the prediction</p>
             </div>
           )}
 

@@ -94,6 +94,31 @@ const Settings = () => {
             </select>
           </div>
 
+          {/* Show Prediction Strategy Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div>
+                <h3 className="text-lg font-medium">Show Prediction Strategy</h3>
+                <p className="text-sm text-gray-500">Show or hide the prediction strategy selector on the prediction page.</p>
+              </div>
+              <FiHelpCircle
+                className="text-gray-400 cursor-help"
+                data-tooltip-id="prediction-strategy-tooltip"
+                data-tooltip-content="Show or hide the prediction strategy selector (F1-optimized vs. cost-effective) on the prediction page."
+              />
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={localSettings.showPredictionStrategy}
+                onChange={e => setLocalSettings(prev => ({ ...prev, showPredictionStrategy: e.target.checked }))}
+                aria-label="Toggle prediction strategy"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+
           {/* Dark Mode */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -151,6 +176,7 @@ const Settings = () => {
       <Tooltip id="notifications-tooltip" />
       <Tooltip id="darkmode-tooltip" />
       <Tooltip id="session-timeout-tooltip" />
+      <Tooltip id="prediction-strategy-tooltip" />
     </div>
   );
 };

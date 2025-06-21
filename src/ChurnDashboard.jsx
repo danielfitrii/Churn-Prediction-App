@@ -497,7 +497,7 @@ export default function ChurnDashboard() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold text-blue-700">Customer Churn Dashboard</h1>
         {/* Show MockDataButton only for demo@example.com */}
-        {user?.email === 'demo@example.com' && <MockDataButton />}
+        {user?.email === 'churnpredictor@gmail.com' && <MockDataButton />}
       </div>
 
       {loading ? (

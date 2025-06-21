@@ -11,6 +11,7 @@ export const SettingsProvider = ({ children }) => {
     notificationType: 'toast',
     darkMode: false,
     sessionTimeout: '60',
+    showPredictionStrategy: false,
   });
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +19,7 @@ export const SettingsProvider = ({ children }) => {
   useEffect(() => {
     const fetchSettings = async () => {
       if (!user?.uid) {
-        setSettings({ notificationType: 'toast', darkMode: false, sessionTimeout: '60' });
+        setSettings({ notificationType: 'toast', darkMode: false, sessionTimeout: '60', showPredictionStrategy: false });
         setLoading(false);
         return;
       }
@@ -27,12 +28,12 @@ export const SettingsProvider = ({ children }) => {
         const settingsRef = doc(db, 'users', user.uid, 'settings', 'preferences');
         const settingsSnap = await getDoc(settingsRef);
         if (settingsSnap.exists()) {
-          setSettings(settingsSnap.data());
+          setSettings({ showPredictionStrategy: false, ...settingsSnap.data() });
         } else {
-          setSettings({ notificationType: 'toast', darkMode: false, sessionTimeout: '60' });
+          setSettings({ notificationType: 'toast', darkMode: false, sessionTimeout: '60', showPredictionStrategy: false });
         }
       } catch (err) {
-        setSettings({ notificationType: 'toast', darkMode: false, sessionTimeout: '60' });
+        setSettings({ notificationType: 'toast', darkMode: false, sessionTimeout: '60', showPredictionStrategy: false });
       }
       setLoading(false);
     };
