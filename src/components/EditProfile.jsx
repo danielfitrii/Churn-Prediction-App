@@ -4,6 +4,7 @@ import { useSettings } from '../context/SettingsContext';
 import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword as firebaseUpdatePassword } from 'firebase/auth';
 import { Tooltip } from 'react-tooltip';
 import { FiHelpCircle } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 
 const EditProfile = () => {
   const { user, updateUserProfile } = useAuth();
@@ -12,7 +13,6 @@ const EditProfile = () => {
   const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const [showToast, setShowToast] = useState(false);
 
   const [formData, setFormData] = useState({
     email: user?.email || '',
@@ -148,8 +148,11 @@ const EditProfile = () => {
         await reauthenticateWithCredential(currentUser, credential);
 
         await firebaseUpdatePassword(currentUser, formData.newPassword);
-        setSuccess('Profile and password updated successfully!');
-
+        if (settings.notificationType === 'toast') {
+          toast.success('Profile and password updated successfully!');
+        } else if (settings.notificationType === 'builtin') {
+          setSuccess('Profile and password updated successfully!');
+        }
       } else if (formData.newPassword || formData.currentPassword) {
          // Handle case where only one password field is filled during password change attempt
          setErrors({ passwordChange: 'Both current and new password are required to change password.' });
@@ -158,7 +161,11 @@ const EditProfile = () => {
       }
        else {
          // If no new password was provided, only profile was updated
-         setSuccess('Profile updated successfully!');
+         if (settings.notificationType === 'toast') {
+           toast.success('Profile updated successfully!');
+         } else if (settings.notificationType === 'builtin') {
+           setSuccess('Profile updated successfully!');
+         }
        }
 
       // Clear password fields after successful update (or if no new password was attempted)
@@ -169,8 +176,6 @@ const EditProfile = () => {
         confirmPassword: ''
       }));
 
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
       setHasChanges(false);
 
     } catch (error) {
@@ -208,12 +213,6 @@ const EditProfile = () => {
     <div className={`max-w-4xl mx-auto ${settings.darkMode ? 'text-white' : 'text-gray-800'}`}>
       <div className={`${settings.darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6`}>
         <h2 className="text-2xl font-bold mb-6">Profile Settings</h2>
-
-        {showToast && (
-          <div className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
-            Changes saved successfully!
-          </div>
-        )}
 
         {success && (
           <div className="mb-4 p-4 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 rounded-lg">

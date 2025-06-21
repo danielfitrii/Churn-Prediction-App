@@ -4,6 +4,7 @@ import { getAuth, verifyPasswordResetCode, confirmPasswordReset } from 'firebase
 import { useSettings } from '../context/SettingsContext';
 import Logo from './Logo';
 import SettingsButtonWithModal from './SettingsButtonWithModal';
+import { toast } from 'react-toastify';
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -35,8 +36,8 @@ const ResetPassword = () => {
   }, [mode, oobCode]);
 
   const validatePassword = (password) => {
-    // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+    // At least 8 characters, 1 uppercase, 1 lowercase, 1 number (symbols allowed)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     return passwordRegex.test(password);
   };
 
@@ -63,7 +64,11 @@ const ResetPassword = () => {
     try {
       const auth = getAuth();
       await confirmPasswordReset(auth, oobCode, newPassword);
-      setStatus({ type: 'success', message: 'Password has been reset. You can now log in.' });
+      if (settings.notificationType === 'toast') {
+        toast.success('Password has been reset. You can now log in.');
+      } else if (settings.notificationType === 'builtin') {
+        setStatus({ type: 'success', message: 'Password has been reset. You can now log in.' });
+      }
     } catch (error) {
       setStatus({ type: 'error', message: error.message });
     } finally {
@@ -114,7 +119,7 @@ const ResetPassword = () => {
           <h2 className={`mt-6 text-center text-3xl font-extrabold ${settings.darkMode ? 'text-white' : 'text-gray-900'}`}>Set a New Password</h2>
           <p className={`mt-2 text-center text-sm ${settings.darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Enter your new password below.</p>
         </div>
-        {status.message && (
+        {settings.notificationType === 'builtin' && status.message && (
           <div className={`rounded-md p-4 ${status.type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' : 'bg-green-100 border border-green-400 text-green-700'}`} role="alert">
             <span className="block sm:inline">{status.message}</span>
           </div>

@@ -3,9 +3,12 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import { useAuth } from './context/AuthContext';
 import { runTransaction, doc } from 'firebase/firestore';
+import { useSettings } from './context/SettingsContext';
+import { toast } from 'react-toastify';
 
 export default function ChurnPredictionApp() {
   const { user } = useAuth();
+  const { settings } = useSettings();
   const [formData, setFormData] = useState({
     tenure: 12,
     monthlyCharges: 70,
@@ -107,6 +110,12 @@ export default function ChurnPredictionApp() {
       };
       
       setPrediction(predictionResult);
+      // Show notification on prediction success
+      if (settings.notificationType === 'toast') {
+        toast.success('Prediction completed!');
+      } else if (settings.notificationType === 'builtin') {
+        setPrediction(prev => ({ ...prev, notificationMessage: 'Prediction completed!' }));
+      }
 
       // Save prediction to Firestore with auto-incremented Customer ID
       try {
@@ -534,6 +543,11 @@ export default function ChurnPredictionApp() {
                   "Predict Churn Risk"
                 )}
               </button>
+              {(!isCustomerInfoComplete && !loading) && (
+                <div className="mt-2 text-sm text-yellow-600 text-center">
+                  Please fill in all customer data to enable prediction.
+                </div>
+              )}
             </div>
           </form>
         </div>
@@ -662,6 +676,11 @@ export default function ChurnPredictionApp() {
           </div>
         </div>
       </div>
+      {settings.notificationType === 'builtin' && prediction?.notificationMessage && (
+        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+          {prediction.notificationMessage}
+        </div>
+      )}
     </div>
   );
 }

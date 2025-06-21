@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import Logo from './Logo';
 import SettingsButtonWithModal from './SettingsButtonWithModal';
+import { toast } from 'react-toastify';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -15,6 +16,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const { user } = useAuth();
 
   const handleMouseDown = () => {
     setShowPassword(true);
@@ -38,8 +40,8 @@ const Login = () => {
   };
 
   const validatePassword = (password) => {
-    // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+    // At least 8 characters, 1 uppercase, 1 lowercase, 1 number (symbols allowed)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
     return passwordRegex.test(password);
   };
 
@@ -72,6 +74,21 @@ const Login = () => {
     try {
       const success = await login(email, password);
       if (success) {
+        // Use setTimeout to ensure user is set after login
+        setTimeout(() => {
+          const storedUser = JSON.parse(localStorage.getItem('user'));
+          const name = storedUser?.firstName || storedUser?.email || 'User';
+          toast.info(`Welcome, ${name}!`, {
+            position: 'top-center',
+            autoClose: 2500,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: settings.darkMode ? 'dark' : 'light',
+          });
+        }, 100);
         navigate('/');
       } else {
         // Since we've already validated the password format, if login fails,
