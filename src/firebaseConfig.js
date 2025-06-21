@@ -20,11 +20,3 @@ export const auth = getAuth(firebaseApp);
 
 // Optional: if want to export firebaseApp itself
 export default firebaseApp;
-
-console.log("FIREBASE CONFIG:", {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-});
-
-console.log("Firebase API KEY:", import.meta.env.VITE_FIREBASE_API_KEY);

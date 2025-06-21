@@ -136,15 +136,14 @@ export default function ChurnPredictionApp() {
         formData.streamingTV === "Yes" ? 1 : 0,
         formData.paperlessBilling === "Yes" ? 1 : 0
       ];
-      console.log('Encoded features:', encodedFeatures, 'Length:', encodedFeatures.length);
       const result = await makePrediction(encodedFeatures, selectedModel, thresholdType);
       
       const predictionResult = {
         churnProbability: (result.probability * 100).toFixed(1),
         riskLevel: result.probability < 0.3 ? 'Low' : result.probability < 0.7 ? 'Medium' : 'High',
         model: selectedModel === 'logistic' ? 'Logistic Regression' : 'Random Forest',
-        thresholdType: result.threshold_type,
-        threshold: result.threshold
+        ...(result.threshold_type !== undefined && { thresholdType: result.threshold_type }),
+        ...(result.threshold !== undefined && { threshold: result.threshold }),
       };
       
       setPrediction(predictionResult);
@@ -198,17 +197,15 @@ export default function ChurnPredictionApp() {
             churnProbability: predictionResult.churnProbability,
             riskLevel: predictionResult.riskLevel,
             model: predictionResult.model,
-            thresholdType: predictionResult.thresholdType,
-            threshold: predictionResult.threshold
+            ...(predictionResult.thresholdType !== undefined && { thresholdType: predictionResult.thresholdType }),
+            ...(predictionResult.threshold !== undefined && { threshold: predictionResult.threshold }),
           },
           userId: user?.uid,
           timestamp: serverTimestamp()
         };
 
         const docRef = await addDoc(collection(db, 'predictions'), predictionData);
-        console.log('Prediction saved with ID:', docRef.id);
       } catch (error) {
-        console.error('Error saving prediction to Firestore:', error);
         // Don't throw the error to the user, just log it
       }
     } catch (error) {
