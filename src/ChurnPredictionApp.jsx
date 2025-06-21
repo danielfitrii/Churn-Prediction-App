@@ -50,6 +50,8 @@ export default function ChurnPredictionApp() {
 
   const { settings } = useSettings();
 
+  const [lastPredictedFormData, setLastPredictedFormData] = useState(null);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -79,6 +81,7 @@ export default function ChurnPredictionApp() {
     }
     setLoading(true);
     setPrediction(null);
+    setLastPredictedFormData(formData);
     try {
       // Encode features to match model's one-hot encoding
       const encodedFeatures = [
@@ -554,7 +557,7 @@ export default function ChurnPredictionApp() {
           </form>
         </div>
 
-        <div className="bg-gray-50 p-6 rounded-lg">
+        <div className="bg-gray-50 p-6 rounded-lg max-h-256 overflow-y-auto">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Prediction Result</h2>
 
           {loading ? (
@@ -597,11 +600,11 @@ export default function ChurnPredictionApp() {
             </div>
           )}
 
-          {prediction && (
+          {prediction && lastPredictedFormData && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h3 className="font-medium text-gray-700 mb-3">Key Churn Factors:</h3>
               <ul className="text-sm text-gray-600 space-y-2">
-                {formData.contract === "Month-to-month" && (
+                {lastPredictedFormData.contract === "Month-to-month" && (
                   <li className="flex items-start">
                     <svg className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -609,7 +612,7 @@ export default function ChurnPredictionApp() {
                     <span className="flex-grow">Month-to-month contract increases churn risk</span>
                   </li>
                 )}
-                {formData.paymentMethod === "Electronic check" && (
+                {lastPredictedFormData.paymentMethod === "Electronic check" && (
                   <li className="flex items-start">
                     <svg className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -617,7 +620,7 @@ export default function ChurnPredictionApp() {
                     <span className="flex-grow">Electronic check payment method</span>
                   </li>
                 )}
-                {formData.internetService === "Fiber optic" && (
+                {lastPredictedFormData.internetService === "Fiber optic" && (
                   <li className="flex items-start">
                     <svg className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -625,7 +628,7 @@ export default function ChurnPredictionApp() {
                     <span className="flex-grow">Fiber optic internet service</span>
                   </li>
                 )}
-                {formData.onlineSecurity === "No" && (
+                {lastPredictedFormData.onlineSecurity === "No" && (
                   <li className="flex items-start">
                     <svg className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -633,7 +636,7 @@ export default function ChurnPredictionApp() {
                     <span className="flex-grow">No online security</span>
                   </li>
                 )}
-                {formData.techSupport === "No" && (
+                {lastPredictedFormData.techSupport === "No" && (
                   <li className="flex items-start">
                     <svg className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -641,7 +644,7 @@ export default function ChurnPredictionApp() {
                     <span className="flex-grow">No tech support</span>
                   </li>
                 )}
-                {formData.tenure < 12 && (
+                {lastPredictedFormData.tenure < 12 && (
                   <li className="flex items-start">
                     <svg className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -649,13 +652,56 @@ export default function ChurnPredictionApp() {
                     <span className="flex-grow">Low tenure (less than 12 months)</span>
                   </li>
                 )}
-                {selectedModel === "randomForest" && formData.tenure < 6 && formData.contract === "Month-to-month" && (
+                {selectedModel === "randomForest" && lastPredictedFormData && lastPredictedFormData.tenure < 6 && lastPredictedFormData.contract === "Month-to-month" && (
                   <li className="flex items-start">
                     <svg className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <span className="flex-grow">New customer with month-to-month contract (high risk combination)</span>
                   </li>
+                )}
+              </ul>
+            </div>
+          )}
+
+          {/* Retention Strategies Section */}
+          {prediction && lastPredictedFormData && (
+            <div className="mt-8 bg-green-50 p-4 rounded-lg border border-green-200">
+              <h3 className="text-base font-semibold text-green-800 mb-2">Retention Strategies:</h3>
+              <ul className="space-y-2 text-green-900">
+                {/* Dynamic strategies based on risk and factors */}
+                {prediction.riskLevel === 'High' && (
+                  <>
+                    <li className="flex items-start"><svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg><span>Contact the customer immediately with a personalized offer or discount.</span></li>
+                    <li className="flex items-start"><svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg><span>Assign a dedicated support representative to address concerns.</span></li>
+                  </>
+                )}
+                {prediction.riskLevel === 'Medium' && (
+                  <>
+                    <li className="flex items-start"><svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg><span>Send a targeted email with loyalty rewards or service improvements.</span></li>
+                    <li className="flex items-start"><svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg><span>Offer a free trial of premium features or support.</span></li>
+                  </>
+                )}
+                {prediction.riskLevel === 'Low' && (
+                  <li className="flex items-start"><svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg><span>Continue providing excellent service and monitor satisfaction.</span></li>
+                )}
+                {lastPredictedFormData.contract === 'Month-to-month' && (
+                  <li className="flex items-start"><svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg><span>Encourage switching to a longer-term contract with incentives.</span></li>
+                )}
+                {lastPredictedFormData.paymentMethod === 'Electronic check' && (
+                  <li className="flex items-start"><svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg><span>Promote more secure or convenient payment methods (e.g., credit card, auto-pay).</span></li>
+                )}
+                {lastPredictedFormData.internetService === 'Fiber optic' && (
+                  <li className="flex items-start"><svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg><span>Highlight the benefits and reliability of your fiber optic service.</span></li>
+                )}
+                {lastPredictedFormData.onlineSecurity === 'No' && (
+                  <li className="flex items-start"><svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg><span>Offer a free or discounted online security package.</span></li>
+                )}
+                {lastPredictedFormData.techSupport === 'No' && (
+                  <li className="flex items-start"><svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg><span>Promote premium or 24/7 tech support options.</span></li>
+                )}
+                {lastPredictedFormData.tenure < 12 && (
+                  <li className="flex items-start"><svg className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg><span>Send a welcome package or onboarding materials to new customers.</span></li>
                 )}
               </ul>
             </div>
