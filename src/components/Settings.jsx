@@ -66,6 +66,34 @@ const Settings = () => {
             </select>
           </div>
 
+          {/* Session Timeout */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div>
+                <h3 className="text-lg font-medium">Session Timeout</h3>
+                <p className="text-sm text-gray-500">Set how long you stay logged in before auto-logout for security.</p>
+              </div>
+              <FiHelpCircle 
+                className="text-gray-400 cursor-help"
+                data-tooltip-id="session-timeout-tooltip"
+                data-tooltip-content="After this period of inactivity, you will be automatically logged out."
+              />
+            </div>
+            <select
+              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={localSettings.sessionTimeout || '60'}
+              onChange={e => setLocalSettings(prev => ({ ...prev, sessionTimeout: e.target.value }))}
+              aria-label="Select session timeout"
+            >
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60">1 hour</option>
+              <option value="240">4 hours</option>
+              <option value="1440">1 day</option>
+              <option value="never">Never</option>
+            </select>
+          </div>
+
           {/* Dark Mode */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -122,6 +150,7 @@ const Settings = () => {
       {/* Tooltips */}
       <Tooltip id="notifications-tooltip" />
       <Tooltip id="darkmode-tooltip" />
+      <Tooltip id="session-timeout-tooltip" />
     </div>
   );
 };

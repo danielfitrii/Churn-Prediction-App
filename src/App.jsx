@@ -9,7 +9,7 @@ import Settings from './components/Settings';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { SettingsProvider } from './context/SettingsContext';
+import { SettingsProvider, useSettings } from './context/SettingsContext';
 import EditProfile from './components/EditProfile';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -17,6 +17,7 @@ import { registerUser } from './firebaseHelpers';
 import { useState, useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -100,10 +101,45 @@ const Layout = () => {
   );
 };
 
+// Add SessionManager component for session timeout logic
+function SessionManager() {
+  const { user, logout } = useAuth();
+  const { settings } = useSettings();
+  useEffect(() => {
+    if (!user) return;
+    let timeoutId;
+    let lastActivity = Date.now();
+    let timeoutMinutes = 60;
+    if (settings.sessionTimeout && settings.sessionTimeout !== 'never') {
+      timeoutMinutes = parseInt(settings.sessionTimeout, 10);
+    }
+    const timeoutMs = settings.sessionTimeout === 'never' ? null : timeoutMinutes * 60 * 1000;
+    const resetTimer = () => {
+      lastActivity = Date.now();
+      if (timeoutId) clearTimeout(timeoutId);
+      if (timeoutMs) {
+        timeoutId = setTimeout(() => {
+          logout();
+          toast.info('You have been logged out due to inactivity.');
+        }, timeoutMs);
+      }
+    };
+    const activityEvents = ['mousemove', 'keydown', 'mousedown', 'touchstart'];
+    activityEvents.forEach(event => window.addEventListener(event, resetTimer));
+    resetTimer();
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      activityEvents.forEach(event => window.removeEventListener(event, resetTimer));
+    };
+  }, [user, settings.sessionTimeout, logout]);
+  return null;
+}
+
 function App() {
   return (
     <AuthProvider>
       <SettingsProvider>
+        <SessionManager />
         <Router>
           <Layout />
           <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
