@@ -493,7 +493,7 @@ export default function ChurnDashboard() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div className="w-full px-8 p-6 bg-white rounded-lg shadow-lg">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold text-blue-700">Customer Churn Dashboard</h1>
         {/* Show MockDataButton only for demo@example.com */}
@@ -786,7 +786,7 @@ export default function ChurnDashboard() {
                            {highlightText(prediction.region, searchQuery)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{prediction.date}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">{prediction.probability}%</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-left">{prediction.probability}%</td>
                         <td className="px-6 py-4 text-sm text-gray-500">{prediction.model}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 

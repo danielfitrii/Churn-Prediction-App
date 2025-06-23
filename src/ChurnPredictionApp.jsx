@@ -256,58 +256,65 @@ export default function ChurnPredictionApp() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div className="w-full px-8 p-6 bg-white rounded-lg shadow-lg">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-blue-700 mb-2">Customer Churn Prediction</h1>
         <p className="text-gray-600 text-lg">Predict whether a customer is likely to churn based on their usage profile</p>
       </div>
-      <div className="mb-6 p-4 bg-blue-50 rounded-lg shadow flex flex-col items-center justify-center">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Customer Basic Information</h2>
-        <form className="flex flex-col md:flex-row md:space-x-4 items-center w-full justify-center">
-          <div className="mb-2 md:mb-0 w-48">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+      <div className="max-w-3xl w-full mx-auto mb-6 p-6 bg-blue-50 rounded-xl shadow-lg customer-info-card">
+        <h2 className="text-2xl font-bold text-blue-900 text-center mb-1">Customer Basic Information</h2>
+        <hr className="border-t border-blue-100 mb-6" />
+        <form className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full customer-info-grid">
+          <div className="form-group">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
+              id="name"
               type="text"
               name="name"
               value={customerInfo.name}
               onChange={handleCustomerInfoChange}
-              className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border text-center bg-white"
+              placeholder="Enter name"
+              className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition"
             />
           </div>
-          <div className="w-32">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+          <div className="form-group">
+            <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">Age</label>
             <input
+              id="age"
               type="number"
               name="age"
               value={customerInfo.age}
               onChange={handleCustomerInfoChange}
-              className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border text-center bg-white"
+              placeholder="Enter age"
               min="0"
+              className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition"
             />
           </div>
-          <div className="mb-2 md:mb-0 w-40">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+          <div className="form-group">
+            <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
             <select
+              id="gender"
               name="gender"
               value={customerInfo.gender}
               onChange={handleCustomerInfoChange}
-              className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border text-center bg-white"
+              className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition"
             >
-              <option value="">Select</option>
+              <option value="">Select gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
               <option value="Undisclosed">Undisclosed</option>
             </select>
           </div>
-          <div className="mb-2 md:mb-0 w-48">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+          <div className="form-group">
+            <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">Region</label>
             <select
+              id="region"
               name="region"
               value={customerInfo.region}
               onChange={handleCustomerInfoChange}
-              className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border text-center bg-white"
+              className="w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition"
             >
-              <option value="">Select Region</option>
+              <option value="">Select region</option>
               <option value="Johor">Johor</option>
               <option value="Kedah">Kedah</option>
               <option value="Kelantan">Kelantan</option>
@@ -680,7 +687,7 @@ export default function ChurnPredictionApp() {
                   Strategy: {prediction.thresholdType === 'f1' ? 'Accurate (F1-optimized)' : 'Cost-effective'} (Threshold: {prediction.threshold})
                 </div>
               )}
-              <div className="text-base text-gray-600 max-w-md text-left">
+              <div className="text-base text-gray-600 max-w-md mb-2 text-left">
                 {prediction.riskLevel === "Low" ? (
                   <p>This customer has a low probability of churning. Continue providing good service.</p>
                 ) : prediction.riskLevel === "Medium" ? (

@@ -52,42 +52,56 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
           </button>
         </div>
         <div className="space-y-6">
+          {/* Notification Style */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div>
-                <h3 className="text-lg font-medium">Enable Notifications</h3>
-                <p className="text-sm text-gray-500">Receive in-app pop-up notifications for updates.</p>
+                <h3 className="text-lg font-medium">Notification Style</h3>
+                <p className="text-sm text-gray-500">Choose how you want to receive notifications for updates.</p>
               </div>
-              <FiHelpCircle 
-                className="text-gray-400 cursor-help"
-                data-tooltip-id="notifications-tooltip-modal"
-                data-tooltip-content="Get notified instantly within the application."
-              />
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={localSettings.notifications}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, notifications: e.target.checked }))}
-                onKeyPress={(e) => handleKeyPress(e, 'notifications')}
-                aria-label="Toggle notifications"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
+            <select
+              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={localSettings.notificationType}
+              onChange={e => setLocalSettings(prev => ({ ...prev, notificationType: e.target.value }))}
+              aria-label="Select notification style"
+            >
+              <option value="none">None</option>
+              <option value="builtin">Built-in</option>
+              <option value="toast">Pop-out (Toast)</option>
+            </select>
           </div>
 
+          {/* Session Timeout */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div>
+                <h3 className="text-lg font-medium">Session Timeout</h3>
+                <p className="text-sm text-gray-500">Set how long you stay logged in before auto-logout for security.</p>
+              </div>
+            </div>
+            <select
+              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={localSettings.sessionTimeout || '60'}
+              onChange={e => setLocalSettings(prev => ({ ...prev, sessionTimeout: e.target.value }))}
+              aria-label="Select session timeout"
+            >
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60">1 hour</option>
+              <option value="240">4 hours</option>
+              <option value="1440">1 day</option>
+              <option value="never">Never</option>
+            </select>
+          </div>
+
+          {/* Dark Mode */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div>
                 <h3 className="text-lg font-medium">Enable Dark Mode</h3>
                 <p className="text-sm text-gray-500">Switch between light and dark theme.</p>
               </div>
-              <FiHelpCircle 
-                className="text-gray-400 cursor-help"
-                data-tooltip-id="darkmode-tooltip-modal"
-                data-tooltip-content="Apply a darker color scheme to the interface."
-              />
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -97,31 +111,6 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
                 onChange={(e) => setLocalSettings(prev => ({ ...prev, darkMode: e.target.checked }))}
                 onKeyPress={(e) => handleKeyPress(e, 'darkMode')}
                 aria-label="Toggle dark mode"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div>
-                <h3 className="text-lg font-medium">Enable Email Updates</h3>
-                <p className="text-sm text-gray-500">Receive email notifications for important updates.</p>
-              </div>
-              <FiHelpCircle 
-                className="text-gray-400 cursor-help"
-                data-tooltip-id="email-tooltip-modal"
-                data-tooltip-content="Receive news and important information via email."
-              />
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={localSettings.emailUpdates}
-                onChange={(e) => setLocalSettings(prev => ({ ...prev, emailUpdates: e.target.checked }))}
-                onKeyPress={(e) => handleKeyPress(e, 'emailUpdates')}
-                aria-label="Toggle email updates"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
@@ -155,10 +144,6 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
           </div>
         </div>
       </div>
-      
-      <Tooltip id="notifications-tooltip-modal" />
-      <Tooltip id="darkmode-tooltip-modal" />
-      <Tooltip id="email-tooltip-modal" />
     </div>
   );
 };

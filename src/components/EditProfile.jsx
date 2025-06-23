@@ -24,11 +24,7 @@ const EditProfile = () => {
     confirmPassword: '',
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
-    phone: user?.phone || '',
-    notifications: user?.notifications || {
-      email: true,
-      push: true
-    }
+    phone: user?.phone || ''
   });
 
   const [errors, setErrors] = useState({});
@@ -45,8 +41,6 @@ const EditProfile = () => {
       formData.firstName !== user?.firstName ||
       formData.lastName !== user?.lastName ||
       formData.phone !== user?.phone ||
-      formData.notifications.email !== user?.notifications?.email ||
-      formData.notifications.push !== user?.notifications?.push ||
       formData.newPassword !== '' ||
       formData.currentPassword !== '' ||
       formData.confirmPassword !== '' ||
@@ -70,21 +64,11 @@ const EditProfile = () => {
   }, [formData.newPassword]);
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (type === 'checkbox') {
-      setFormData(prev => ({
-        ...prev,
-        notifications: {
-          ...prev.notifications,
-          [name]: checked
-        }
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleImageChange = (e) => {
@@ -527,65 +511,6 @@ const EditProfile = () => {
             )}
           </div>
 
-          {/* Notification Preferences */}
-          <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <h3 className="text-lg font-medium mb-4">Notification Preferences</h3>
-            <div className="space-y-4">
-              <label className="flex items-center justify-between">
-                <span>Email Notifications</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={formData.notifications.email}
-                  onClick={() => setFormData(prev => ({
-                    ...prev,
-                    notifications: {
-                      ...prev.notifications,
-                      email: !prev.notifications.email
-                    }
-                  }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    formData.notifications.email
-                      ? 'bg-blue-600'
-                      : 'bg-gray-200 dark:bg-gray-600'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      formData.notifications.email ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </label>
-              <label className="flex items-center justify-between">
-                <span>Push Notifications</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={formData.notifications.push}
-                  onClick={() => setFormData(prev => ({
-                    ...prev,
-                    notifications: {
-                      ...prev.notifications,
-                      push: !prev.notifications.push
-                    }
-                  }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    formData.notifications.push
-                      ? 'bg-blue-600'
-                      : 'bg-gray-200 dark:bg-gray-600'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      formData.notifications.push ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </label>
-            </div>
-          </div>
-
           <div className="flex justify-end space-x-4">
             <button
               type="button"
@@ -598,11 +523,7 @@ const EditProfile = () => {
                     confirmPassword: '',
                     firstName: user?.firstName || '',
                     lastName: user?.lastName || '',
-                    phone: user?.phone || '',
-                    notifications: user?.notifications || {
-                      email: true,
-                      push: true
-                    }
+                    phone: user?.phone || ''
                   });
                   setPreviewImage(user?.profilePicture || null);
                   setErrors({});

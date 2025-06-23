@@ -290,8 +290,8 @@ export default function ModelExplanation() {
 
     if (loading) {
         return (
-            <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg flex items-center justify-center h-96">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-blue-500"></div>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-80">
+                <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-blue-500 border-b-4"></div>
             </div>
         );
     }
@@ -314,7 +314,7 @@ export default function ModelExplanation() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="w-full px-8">
 
             {/* Tabs */}
             <div className="flex space-x-4 mb-6">
