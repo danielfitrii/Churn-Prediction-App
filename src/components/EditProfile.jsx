@@ -218,7 +218,7 @@ const EditProfile = () => {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Profile Picture Section */}
-          <div className={`flex items-center space-x-6 p-4 ${settings.darkMode ? 'bg-gray-700' : 'bg-white'} rounded-lg`}>
+          <div className={`flex items-center space-x-6 p-4 ${settings.darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg`}>
             <div className="relative group">
               <div className={`w-24 h-24 rounded-full overflow-hidden ${settings.darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
                 {previewImage ? (
@@ -269,7 +269,7 @@ const EditProfile = () => {
           </div>
 
           {/* Personal Information */}
-          <div className={`p-4 ${settings.darkMode ? 'bg-gray-700' : 'bg-white'} rounded-lg`}>
+          <div className={`p-4 ${settings.darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg`}>
             <h3 className="text-lg font-medium mb-4">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -329,7 +329,7 @@ const EditProfile = () => {
           </div>
 
           {/* Password Change */}
-          <div className={`p-4 ${settings.darkMode ? 'bg-gray-700' : 'bg-white'} rounded-lg`}>
+          <div className={`p-4 ${settings.darkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg`}>
             <button
               type="button"
               onClick={() => setIsPasswordSectionOpen(!isPasswordSectionOpen)}
