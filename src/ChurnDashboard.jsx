@@ -545,7 +545,41 @@ export default function ChurnDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Churn Trend Chart */}
             <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Churn Rate Trend</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">Churn Rate Trend</h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setTimeframe("month")}
+                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors duration-200 ${
+                      timeframe === "month"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => setTimeframe("quarter")}
+                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors duration-200 ${
+                      timeframe === "quarter"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Quarterly
+                  </button>
+                  <button
+                    onClick={() => setTimeframe("year")}
+                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors duration-200 ${
+                      timeframe === "year"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Yearly
+                  </button>
+                </div>
+              </div>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={getChartData()} margin={{ top: 5, right: 35, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
