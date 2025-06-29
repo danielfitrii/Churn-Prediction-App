@@ -194,9 +194,9 @@ const EditProfile = () => {
   };
 
   return (
-    <div className={`max-w-4xl mx-auto text-gray-800 dark:text-gray-50`}>
+    <div className={`max-w-4xl mx-auto ${settings.darkMode ? 'text-gray-50' : 'text-gray-800'}`}>
       <div className={`${settings.darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6`}>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-50">Profile Settings</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Profile Settings</h2>
 
         {showToast && (
           <div className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
@@ -218,11 +218,9 @@ const EditProfile = () => {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Profile Picture Section */}
-          <div className="flex items-center space-x-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className={`flex items-center space-x-6 p-4 ${settings.darkMode ? 'bg-gray-700' : 'bg-white'} rounded-lg`}>
             <div className="relative group">
-              <div className={`w-24 h-24 rounded-full overflow-hidden ${
-                settings.darkMode ? 'bg-gray-700' : 'bg-gray-200'
-              }`}>
+              <div className={`w-24 h-24 rounded-full overflow-hidden ${settings.darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
                 {previewImage ? (
                   <img
                     src={previewImage}
@@ -240,7 +238,7 @@ const EditProfile = () => {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 p-2 rounded-full bg-blue-600 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-blue-500"
+                className={`absolute bottom-0 right-0 p-2 rounded-full bg-blue-600 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-blue-500 ${settings.darkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -263,7 +261,7 @@ const EditProfile = () => {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="mt-2 px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                className={`mt-2 px-4 py-2 ${settings.darkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'} rounded-lg transition-colors`}
               >
                 Change Picture
               </button>
@@ -271,7 +269,7 @@ const EditProfile = () => {
           </div>
 
           {/* Personal Information */}
-          <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className={`p-4 ${settings.darkMode ? 'bg-gray-700' : 'bg-white'} rounded-lg`}>
             <h3 className="text-lg font-medium mb-4">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -281,11 +279,7 @@ const EditProfile = () => {
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 rounded-lg border ${
-                    settings.darkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 rounded-lg border ${settings.darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 />
               </div>
               <div>
@@ -295,11 +289,7 @@ const EditProfile = () => {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 rounded-lg border ${
-                    settings.darkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 rounded-lg border ${settings.darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 />
               </div>
               <div>
@@ -313,11 +303,7 @@ const EditProfile = () => {
                     name="email"
                     value={formData.email}
                     disabled
-                    className={`w-full px-3 py-2 rounded-lg border ${
-                      settings.darkMode 
-                        ? 'bg-gray-700 border-gray-600 text-gray-400' 
-                        : 'bg-gray-100 border-gray-300 text-gray-500'
-                    }`}
+                    className={`w-full px-3 py-2 rounded-lg border ${settings.darkMode ? 'bg-gray-700 border-gray-600 text-gray-400' : 'bg-gray-100 border-gray-300 text-gray-500'}`}
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -333,11 +319,7 @@ const EditProfile = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 rounded-lg border ${
-                    settings.darkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 rounded-lg border ${settings.darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 />
                 {errors.phone && (
                   <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
@@ -347,7 +329,7 @@ const EditProfile = () => {
           </div>
 
           {/* Password Change */}
-          <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className={`p-4 ${settings.darkMode ? 'bg-gray-700' : 'bg-white'} rounded-lg`}>
             <button
               type="button"
               onClick={() => setIsPasswordSectionOpen(!isPasswordSectionOpen)}
@@ -384,11 +366,7 @@ const EditProfile = () => {
                         name="currentPassword"
                         value={formData.currentPassword}
                         onChange={handleInputChange}
-                        className={`w-full px-3 py-2 rounded-lg border ${
-                          settings.darkMode 
-                            ? 'bg-gray-700 border-gray-600 text-white' 
-                            : 'bg-white border-gray-300'
-                        }`}
+                        className={`w-full px-3 py-2 rounded-lg border ${settings.darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                       />
                       <button
                         type="button"
@@ -416,11 +394,7 @@ const EditProfile = () => {
                         name="newPassword"
                         value={formData.newPassword}
                         onChange={handleInputChange}
-                        className={`w-full px-3 py-2 rounded-lg border ${
-                          settings.darkMode 
-                            ? 'bg-gray-700 border-gray-600 text-white' 
-                            : 'bg-white border-gray-300'
-                        }`}
+                        className={`w-full px-3 py-2 rounded-lg border ${settings.darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                       />
                       <button
                         type="button"
@@ -468,11 +442,7 @@ const EditProfile = () => {
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        className={`w-full px-3 py-2 rounded-lg border ${
-                          settings.darkMode 
-                            ? 'bg-gray-700 border-gray-600 text-white' 
-                            : 'bg-white border-gray-300'
-                        }`}
+                        className={`w-full px-3 py-2 rounded-lg border ${settings.darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                       />
                       <button
                         type="button"
