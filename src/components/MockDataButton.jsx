@@ -25,7 +25,9 @@ export default function MockDataButton() {
         alert('Mock data inserted successfully!');
       } catch (error) {
         console.error('Error inserting mock data:', error);
-        alert('Error inserting mock data. Please try again.');
+        // Show more detailed error message
+        const errorMessage = error.message || 'Unknown error occurred';
+        alert(`Error inserting mock data: ${errorMessage}\n\nPlease check:\n1. You are logged in\n2. Firestore is enabled\n3. Firestore security rules allow writes\n4. Check browser console for details`);
       } finally {
         setLoading(false);
       }

@@ -209,12 +209,19 @@ export default function ChurnPredictionApp() {
         // Don't throw the error to the user, just log it
       }
     } catch (error) {
+      console.error('Prediction error:', error);
+      const errorMessage = error.message || 'An error occurred while making the prediction';
+      
+      // Show user-friendly error message
+      toast.error(`Prediction failed: ${errorMessage}`);
+      
       setPrediction({
         churnProbability: 'Error',
         riskLevel: 'Error',
         model: 'Error',
         thresholdType: 'Error',
-        threshold: 'Error'
+        threshold: 'Error',
+        errorMessage: errorMessage
       });
     }
     setLoading(false);
@@ -222,10 +229,12 @@ export default function ChurnPredictionApp() {
 
   const makePrediction = async (features, model, thresholdType) => {
     try {
-      // Use local backend URL in development, deployed URL in production
-      const backendUrl = import.meta.env.DEV 
-        ? 'http://localhost:5000/predict'
-        : 'https://churn-prediction-flask-app-307074742286.asia-southeast1.run.app/predict';
+      // Use environment variable if available, otherwise fall back to defaults
+      const backendUrl = import.meta.env.VITE_BACKEND_URL 
+        ? `${import.meta.env.VITE_BACKEND_URL}/predict`
+        : import.meta.env.DEV 
+          ? 'http://localhost:5000/predict'
+          : (import.meta.env.VITE_PROD_BACKEND_URL || 'https://churn-prediction-flask-app-hquhpswb6q-as.a.run.app') + '/predict';
         
       const response = await fetch(backendUrl, {
         method: 'POST',
@@ -234,10 +243,31 @@ export default function ChurnPredictionApp() {
         },
         body: JSON.stringify({ features, model, threshold_type: thresholdType }),
       });
+      
+      // Check if response is OK before parsing
+      if (!response.ok) {
+        let errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (e) {
+          // If we can't parse the error response, use the status text
+        }
+        throw new Error(errorMessage);
+      }
+      
       const data = await response.json();
       if (data.error) {
         throw new Error(data.error);
       }
+      
+      // Validate required fields
+      if (data.probability === undefined || data.prediction === undefined) {
+        throw new Error('Invalid response from prediction server');
+      }
+      
       return {
         prediction: data.prediction,
         probability: data.probability,
@@ -246,6 +276,10 @@ export default function ChurnPredictionApp() {
       };
     } catch (error) {
       console.error('Error making prediction:', error);
+      // Provide more user-friendly error messages
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Unable to connect to prediction server. Please check your internet connection and try again.');
+      }
       throw error;
     }
   };
@@ -496,8 +530,7 @@ export default function ChurnPredictionApp() {
                   >
                     <option value="Electronic check">Electronic check</option>
                     <option value="Mailed check">Mailed check</option>
-                    <option value="Bank transfer">Bank transfer</option>
-                    <option value="Credit card">Credit card</option>
+                    <option value="Credit card (automatic)">Credit card (automatic)</option>
                   </select>
                 </div>
 
@@ -666,37 +699,54 @@ export default function ChurnPredictionApp() {
               <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           ) : prediction ? (
-            <div className="h-64 flex flex-col items-center justify-center">
-              <div className={`text-6xl font-bold mb-2 ${
-                prediction.riskLevel === "Low"
-                  ? "text-green-500"
-                  : prediction.riskLevel === "Medium"
-                    ? "text-yellow-500"
-                    : "text-red-500"
-              }`}>
-                {prediction.churnProbability}%
-              </div>
-              <div className="text-xl font-medium text-gray-700 mb-2 text-center">
-                {prediction.riskLevel} Risk
-              </div>
-              <div className="text-sm text-blue-600 font-medium mb-4 text-center">
-                {prediction.model}
-              </div>
-              {prediction.thresholdType && (
-                <div className="text-sm text-gray-500 mb-2 text-center">
-                  Strategy: {prediction.thresholdType === 'f1' ? 'Accurate (F1-optimized)' : 'Cost-effective'} (Threshold: {prediction.threshold})
+            prediction.riskLevel === "Error" ? (
+              <div className="h-64 flex flex-col items-center justify-center">
+                <div className="text-4xl mb-4 text-red-500">
+                  ⚠️
                 </div>
-              )}
-              <div className="text-base text-gray-600 max-w-md mb-2 text-left">
-                {prediction.riskLevel === "Low" ? (
-                  <p>This customer has a low probability of churning. Continue providing good service.</p>
-                ) : prediction.riskLevel === "Medium" ? (
-                  <p>This customer has a moderate risk of churning. Consider proactive retention strategies.</p>
-                ) : (
-                  <p>This customer has a high risk of churning. Immediate intervention recommended.</p>
-                )}
+                <div className="text-xl font-bold text-red-600 mb-2 text-center">
+                  Prediction Failed
+                </div>
+                <div className="text-sm text-gray-600 max-w-md mb-4 text-center px-4">
+                  {prediction.errorMessage || 'An error occurred while making the prediction. Please try again.'}
+                </div>
+                <div className="text-xs text-gray-500 text-center px-4">
+                  If this problem persists, please check your internet connection or contact support.
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="h-64 flex flex-col items-center justify-center">
+                <div className={`text-6xl font-bold mb-2 ${
+                  prediction.riskLevel === "Low"
+                    ? "text-green-500"
+                    : prediction.riskLevel === "Medium"
+                      ? "text-yellow-500"
+                      : "text-red-500"
+                }`}>
+                  {prediction.churnProbability}%
+                </div>
+                <div className="text-xl font-medium text-gray-700 mb-2 text-center">
+                  {prediction.riskLevel} Risk
+                </div>
+                <div className="text-sm text-blue-600 font-medium mb-4 text-center">
+                  {prediction.model}
+                </div>
+                {prediction.thresholdType && (
+                  <div className="text-sm text-gray-500 mb-2 text-center">
+                    Strategy: {prediction.thresholdType === 'f1' ? 'Accurate (F1-optimized)' : 'Cost-effective'} (Threshold: {prediction.threshold})
+                  </div>
+                )}
+                <div className="text-base text-gray-600 max-w-md mb-2 text-left">
+                  {prediction.riskLevel === "Low" ? (
+                    <p>This customer has a low probability of churning. Continue providing good service.</p>
+                  ) : prediction.riskLevel === "Medium" ? (
+                    <p>This customer has a moderate risk of churning. Consider proactive retention strategies.</p>
+                  ) : (
+                    <p>This customer has a high risk of churning. Immediate intervention recommended.</p>
+                  )}
+                </div>
+              </div>
+            )
           ) : (
             <div className="h-64 flex items-center justify-center text-gray-400 text-center">
               <p>Enter customer data and click "Predict Churn Risk" to see the prediction</p>

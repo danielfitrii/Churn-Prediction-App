@@ -7,12 +7,32 @@ import pandas as pd
 
 app = Flask(__name__)
 # Allow both development and production origins
-CORS(app, origins=["https://churn-prediction-ba530.web.app", "http://localhost:5173"])
+# Update this list with all your deployed frontend URLs
+# NOTE: Verify which Firebase hosting URLs are currently active and remove any old ones
+allowed_origins = [
+    "https://churn-prediction-app-92228.web.app",  # Current live site
+    "https://churn-prediction-ba530.web.app",  # Verify if this is still active or remove if old
+    "http://localhost:5173",  # Vite dev server default port
+    "http://localhost:3000"   # Common alternative dev port
+]
+# Allow environment variable to add additional origins
+if os.getenv('CORS_ORIGINS'):
+    allowed_origins.extend(os.getenv('CORS_ORIGINS').split(','))
+# Configure CORS with explicit settings to handle preflight requests
+CORS(app, 
+     resources={r"/*": {
+         "origins": allowed_origins,
+         "methods": ["GET", "POST", "OPTIONS"],
+         "allow_headers": ["Content-Type", "Authorization"],
+         "supports_credentials": False
+     }})
 
 # Load both models
+# Use correct path for Docker container
+models_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models')
 models = {
-    'logistic': joblib.load(os.path.join('models', 'logreg_tomek_weighted_final_bundle.joblib'))['pipeline'],
-    'randomForest': joblib.load(os.path.join('models', 'rf_tomek_weighted_final_bundle.joblib'))['pipeline']
+    'logistic': joblib.load(os.path.join(models_dir, 'logreg_tomek_weighted_final_bundle.joblib'))['pipeline'],
+    'randomForest': joblib.load(os.path.join(models_dir, 'rf_tomek_weighted_final_bundle.joblib'))['pipeline']
 }
 
 feature_names = [
@@ -40,12 +60,11 @@ def predict():
             'randomForest': 'rf_tomek_weighted_final_bundle.joblib'
         }
         bundle_filename = bundle_filenames[model_key]
-        bundle = joblib.load(os.path.join('models', bundle_filename))
+        bundle = joblib.load(os.path.join(models_dir, bundle_filename))
         model = bundle['pipeline']
         threshold = bundle['threshold_f1'] if threshold_type == 'f1' else bundle['threshold_cost']
         probability = model.predict_proba(X)[0][1]
         prediction = int(probability >= threshold)
-        print(f"[Prediction Log] Model: {model_key}, Threshold type: {threshold_type}, Threshold: {threshold}, Probability: {probability}, Prediction: {prediction}")
         return jsonify({
             'prediction': prediction,
             'probability': float(probability),

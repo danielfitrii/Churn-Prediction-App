@@ -1,5 +1,5 @@
 import { db } from '../firebaseConfig';
-import { collection, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, setDoc, Timestamp } from 'firebase/firestore';
 
 // Mock data generation functions
 const generateRandomCustomer = (id) => {
@@ -67,7 +67,8 @@ export const insertMockData = async (userId, numberOfRecords = 50, startYear, en
         const startMillis = startDate.getTime();
         const endMillis = endDate.getTime();
         const randomMillis = startMillis + Math.random() * (endMillis - startMillis);
-        return new Date(randomMillis);
+        // Convert JavaScript Date to Firestore Timestamp
+        return Timestamp.fromDate(new Date(randomMillis));
     };
 
     // Determine the year range to use if not provided
@@ -91,7 +92,10 @@ export const insertMockData = async (userId, numberOfRecords = 50, startYear, en
     }
 
     console.log('Successfully inserted mock data!');
+    return true;
   } catch (error) {
     console.error('Error inserting mock data:', error);
+    // Re-throw the error so the caller can handle it
+    throw error;
   }
 }; 

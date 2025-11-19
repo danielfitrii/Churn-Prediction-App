@@ -182,7 +182,7 @@ export default function ChurnPrediction() {
               <Select name="contract" label="Contract Type" value={formData.contract} onChange={handleChange}
                 options={["Month-to-month", "One year", "Two year"]} />
               <Select name="paymentMethod" label="Payment Method" value={formData.paymentMethod} onChange={handleChange}
-                options={["Electronic check", "Mailed check", "Bank transfer", "Credit card"]} />
+                options={["Electronic check", "Mailed check", "Credit card (automatic)"]} />
               <Select name="internetService" label="Internet Service" value={formData.internetService} onChange={handleChange}
                 options={["DSL (Digital Subscriber Line)", "Fiber optic (High-speed fiber)", "No"]} />
               <Select name="onlineSecurity" label="Online Security" value={formData.onlineSecurity} onChange={handleChange}
