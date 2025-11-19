@@ -1,5 +1,5 @@
-// Function to sample data with smaller sample size
-const sampleData = (data, sampleSize = 500) => {
+// Function to sample data with smaller sample size for better performance
+const sampleData = (data, sampleSize = 300) => {
     if (data.length <= sampleSize) return data;
     const step = Math.floor(data.length / sampleSize);
     return data.filter((_, index) => index % step === 0);
@@ -21,7 +21,7 @@ const processData = (shapData, featureData, valuesData) => {
     // Sort features by importance
     featureImportance.sort((a, b) => b.meanAbsShap - a.meanAbsShap);
     
-    // Only keep top 10 features for better performance
+    // Only keep top 10 features for better performance (reduced from all features)
     const topFeatures = featureImportance.slice(0, 10).map(item => item.feature);
 
     // Prepare data for visualization

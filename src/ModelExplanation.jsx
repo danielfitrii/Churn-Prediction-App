@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from "react";
 import {
     BarChart,
     Bar,
@@ -9,8 +9,8 @@ import {
     ResponsiveContainer,
     Cell,
 } from "recharts";
-import shapSummary from './assets/LogisticRegression_SHAP.png';
-import Plot from "react-plotly.js";
+// Lazy load Plotly to reduce initial bundle size
+const Plot = lazy(() => import("react-plotly.js"));
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faCheckCircle, 
@@ -46,8 +46,8 @@ const modelJsonFiles = {
     }
 };
 
-// Function to sample data
-const sampleData = (data, sampleSize = 1000) => {
+// Function to sample data - reduced sample size for better performance
+const sampleData = (data, sampleSize = 300) => {
     if (data.length <= sampleSize) return data;
     const step = Math.floor(data.length / sampleSize);
     return data.filter((_, index) => index % step === 0);
@@ -99,6 +99,7 @@ const processModelData = async (modelName) => {
 
 export default function ModelExplanation() {
     const [loading, setLoading] = useState(true);
+    const [plotLoading, setPlotLoading] = useState(true);
     const [selectedModel, setSelectedModel] = useState("Logistic Regression");
     const [shapValues, setShapValues] = useState([]);
     const [featureNames, setFeatureNames] = useState([]);
@@ -107,7 +108,7 @@ export default function ModelExplanation() {
     const [error, setError] = useState(null);
     const [featureImportances, setFeatureImportances] = useState([]);
     
-    // Create a ref for the worker
+    // Create a ref for the worker - reuse worker instance
     const workerRef = useRef(null);
 
     // Add refs for scroll targets
@@ -119,43 +120,42 @@ export default function ModelExplanation() {
         ref.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    // Initialize worker
+    // Initialize worker - only create once
     useEffect(() => {
-        console.log('Initializing Web Worker...');
-        workerRef.current = new Worker(new URL('./workers/modelDataWorker.js', import.meta.url));
+        if (!workerRef.current) {
+            workerRef.current = new Worker(new URL('./workers/modelDataWorker.js', import.meta.url));
+        }
         
         // Cleanup worker on component unmount
         return () => {
-            console.log('Terminating Web Worker...');
-            workerRef.current?.terminate();
+            if (workerRef.current) {
+                workerRef.current.terminate();
+                workerRef.current = null;
+            }
         };
     }, []);
 
     // Load model data using Web Worker
     const loadModelData = useCallback(async (modelName) => {
-        console.log(`Loading data for model: ${modelName}`);
         setLoading(true);
         setError(null);
 
         // Check cache first
         if (dataCache[modelName]) {
-            console.log('Using cached data');
             const cachedData = dataCache[modelName];
             setShapValues(cachedData.shapValues);
             setFeatureNames(cachedData.featureNames);
             setFeatureValues(cachedData.featureValues);
             setSortedFeatureNames(cachedData.sortedFeatureNames);
             setLoading(false);
+            setPlotLoading(false);
             return;
         }
-
-        console.log('Fetching new data from worker...');
         // Set up worker message handler
-        workerRef.current.onmessage = (e) => {
+        const handleMessage = (e) => {
             const { type, modelName: workerModelName, data, error: workerError } = e.data;
             
             if (type === 'success') {
-                console.log('Worker processing completed successfully');
                 // Cache the processed data
                 dataCache[workerModelName] = data;
                 
@@ -165,12 +165,16 @@ export default function ModelExplanation() {
                 setFeatureValues(data.featureValues);
                 setSortedFeatureNames(data.sortedFeatureNames);
                 setLoading(false);
+                // Delay plot loading slightly to allow UI to render first
+                setTimeout(() => setPlotLoading(false), 100);
             } else {
-                console.error('Worker error:', workerError);
                 setError(workerError || "Failed to load model data");
                 setLoading(false);
+                setPlotLoading(false);
             }
         };
+        
+        workerRef.current.onmessage = handleMessage;
 
         // Send data to worker for processing
         workerRef.current.postMessage({
@@ -184,12 +188,13 @@ export default function ModelExplanation() {
         loadModelData(selectedModel);
     }, [selectedModel, loadModelData]);
 
-    // Handle model change
+    // Handle model change - reset plot loading state
     const handleModelChange = (modelName) => {
         setSelectedModel(modelName);
+        setPlotLoading(true);
     };
 
-    // Fetch feature importances when model changes
+    // Fetch feature importances when model changes - memoized
     useEffect(() => {
         const fetchImportances = async () => {
             try {
@@ -206,6 +211,85 @@ export default function ModelExplanation() {
         };
         fetchImportances();
     }, [selectedModel]);
+
+    // Memoize plot data to prevent unnecessary recalculations
+    const plotData = useMemo(() => {
+        if (!shapValues.length || !featureNames.length || !featureValues.length || !sortedFeatureNames.length) {
+            return [];
+        }
+        
+        // Limit to top 10 features for better performance
+        const topFeatures = sortedFeatureNames.slice(0, 10);
+        
+        return topFeatures.map((feature, i) => {
+            const featureIdx = featureNames.indexOf(feature);
+            if (featureIdx === -1) return null;
+            
+            return {
+                type: "scatter",
+                mode: "markers",
+                x: shapValues.map(sample => sample[featureIdx]),
+                y: Array(shapValues.length).fill(feature),
+                name: feature,
+                marker: {
+                    color: featureValues.map(sample => sample[featureIdx]),
+                    colorscale: 'RdBu',
+                    showscale: i === 0,
+                    colorbar: i === 0 ? {
+                        title: 'Feature value',
+                        thickness: 15,
+                        x: 1.05,
+                    } : undefined,
+                    size: 3,
+                    opacity: 0.5,
+                    line: {
+                        width: 0.1,
+                        color: 'gray'
+                    }
+                },
+                hovertemplate: 
+                    '<b>%{y}</b><br>' +
+                    'SHAP Value: %{x:.3f}<br>' +
+                    'Feature Value: %{marker.color:.3f}<br>' +
+                    '<extra></extra>'
+            };
+        }).filter(Boolean);
+    }, [shapValues, featureNames, featureValues, sortedFeatureNames]);
+    
+    // Memoize plot layout
+    const plotLayout = useMemo(() => {
+        if (!sortedFeatureNames.length) return {};
+        
+        const topFeatures = sortedFeatureNames.slice(0, 10);
+        
+        return {
+            title: "SHAP Value Distribution per Feature (Top 10)",
+            xaxis: { 
+                title: "SHAP value (impact on model output)",
+                autorange: true,
+                fixedrange: true
+            },
+            yaxis: { 
+                title: "Feature", 
+                type: 'category', 
+                autorange: 'reversed',
+                fixedrange: true
+            },
+            margin: {
+                l: Math.max(...topFeatures.map(f => f.length)) * 7.5,
+                r: 120, 
+                t: 40, 
+                b: 40
+            },
+            height: 600,
+            showlegend: false,
+            hovermode: 'closest',
+            dragmode: false,
+            modebar: {
+                remove: ['lasso2d', 'select2d', 'zoom2d', 'pan2d']
+            }
+        };
+    }, [sortedFeatureNames]);
 
     const modelData = {
         "Logistic Regression": {
@@ -486,80 +570,35 @@ export default function ModelExplanation() {
                         </div>
                     </div>
 
-                    {shapValues.length && featureNames.length && featureValues.length && sortedFeatureNames.length ? (
-                        <Plot
-                            data={sortedFeatureNames.map((feature, i) => {
-                                const featureIdx = featureNames.indexOf(feature);
-                                return {
-                                    type: "scatter",
-                                    mode: "markers",
-                                    x: shapValues.map(sample => sample[featureIdx]),
-                                    y: Array(shapValues.length).fill(feature),
-                                    name: feature,
-                                    marker: {
-                                        color: featureValues.map(sample => sample[featureIdx]),
-                                        colorscale: 'RdBu',
-                                        showscale: i === 0,
-                                        colorbar: i === 0 ? {
-                                            title: 'Feature value',
-                                            thickness: 15,
-                                            x: 1.05,
-                                        } : undefined,
-                                        size: 4,
-                                        opacity: 0.6,
-                                        line: {
-                                            width: 0.2,
-                                            color: 'gray'
-                                        }
-                                    },
-                                    hovertemplate: 
-                                        '<b>%{y}</b><br>' +
-                                        'SHAP Value: %{x:.3f}<br>' +
-                                        'Feature Value: %{marker.color:.3f}<br>' +
-                                        '<extra></extra>'
-                                };
-                            })}
-                            layout={{
-                                title: "SHAP Value Distribution per Feature",
-                                xaxis: { 
-                                    title: "SHAP value (impact on model output)",
-                                    autorange: true,
-                                    fixedrange: true
-                                },
-                                yaxis: { 
-                                    title: "Feature", 
-                                    type: 'category', 
-                                    autorange: 'reversed',
-                                    fixedrange: true
-                                },
-                                margin: {
-                                    l: Math.max(...sortedFeatureNames.map(f => f.length)) * 7.5,
-                                    r: 120, 
-                                    t: 40, 
-                                    b: 40
-                                },
-                                height: 600,
-                                showlegend: false,
-                                hovermode: 'closest',
-                                dragmode: false,
-                                modebar: {
-                                    remove: ['lasso2d', 'select2d', 'zoom2d', 'pan2d']
-                                }
-                            }}
-                            config={{ 
-                                responsive: true,
-                                displayModeBar: false,
-                                staticPlot: false,
-                                displaylogo: false,
-                                modeBarButtonsToRemove: ['lasso2d', 'select2d', 'zoom2d', 'pan2d'],
-                                scrollZoom: false
-                            }}
-                            style={{ width: "100%" }}
-                            useResizeHandler={true}
-                            frames={[]}
-                        />
+                    {plotLoading ? (
+                        <div className="flex items-center justify-center h-96">
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                            <span className="ml-4 text-gray-600">Loading visualization...</span>
+                        </div>
+                    ) : plotData.length > 0 ? (
+                        <Suspense fallback={
+                            <div className="flex items-center justify-center h-96">
+                                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                            </div>
+                        }>
+                            <Plot
+                                data={plotData}
+                                layout={plotLayout}
+                                config={{ 
+                                    responsive: true,
+                                    displayModeBar: false,
+                                    staticPlot: false,
+                                    displaylogo: false,
+                                    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'zoom2d', 'pan2d'],
+                                    scrollZoom: false,
+                                    doubleClick: false
+                                }}
+                                style={{ width: "100%" }}
+                                useResizeHandler={true}
+                            />
+                        </Suspense>
                     ) : (
-                        <div>Loading SHAP violin plot...</div>
+                        <div className="text-gray-500 text-center py-8">No SHAP data available</div>
                     )}
                 </section>
 
