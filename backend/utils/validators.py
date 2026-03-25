@@ -24,7 +24,7 @@ def validate_prediction_request(data: Dict[str, Any]) -> None:
     if not isinstance(features, list):
         raise InvalidInputError("'features' must be a list")
     
-    from ..config import FEATURE_NAMES
+    from config import FEATURE_NAMES
 
     if len(features) != len(FEATURE_NAMES):
         raise InvalidInputError(f"Expected {len(FEATURE_NAMES)} features, got {len(features)}")
@@ -45,7 +45,7 @@ def validate_model_key(model_key: str) -> None:
     Raises:
         InvalidInputError: If model key is invalid
     """
-    from ..config import MODEL_CONFIG
+    from config import MODEL_CONFIG
     
     if model_key not in MODEL_CONFIG:
         raise InvalidInputError(f"Invalid model key: {model_key}. Must be one of {list(MODEL_CONFIG.keys())}")
@@ -61,7 +61,7 @@ def validate_threshold_type(threshold_type: str) -> None:
     Raises:
         InvalidInputError: If threshold type is invalid
     """
-    from ..config import THRESHOLD_TYPES
+    from config import THRESHOLD_TYPES
     
     if threshold_type not in THRESHOLD_TYPES:
         raise InvalidInputError(f"Invalid threshold type: {threshold_type}. Must be one of {list(THRESHOLD_TYPES.keys())}")

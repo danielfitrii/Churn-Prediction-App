@@ -1,15 +1,23 @@
 FROM python:3.9-slim
 
+# Install system dependencies for ML libraries
+RUN apt-get update && apt-get install -y \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy requirements.txt from the backend directory and install dependencies
-COPY backend/requirements.txt backend/
-RUN pip install --no-cache-dir -r backend/requirements.txt
+# Copy requirements first to leverage Docker cache
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the backend application code
-COPY backend/. backend/
+# Copy all backend files directly into /app
+COPY backend/ .
+
+# Set PYTHONPATH so Python looks in the current directory for modules
+ENV PYTHONPATH=/app
 
 EXPOSE 8080
 
-# Command to run the application using Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--chdir", "backend", "app:app"]
+# Run gunicorn directly on app:app since we are now in the same folder
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "8", "app:app"]
