@@ -224,11 +224,15 @@ export default function ChurnPredictionApp() {
 
   const makePrediction = async (features, model, thresholdType) => {
     try {
+      // Preferred: same-origin proxy via Firebase Hosting rewrite (/api -> Cloud Run)
+      // Fallbacks: explicit VITE_BACKEND_URL, local dev, or VITE_PROD_BACKEND_URL.
       const backendUrl = import.meta.env.VITE_BACKEND_URL
         ? `${import.meta.env.VITE_BACKEND_URL}/predict`
         : import.meta.env.DEV
           ? 'http://localhost:5000/predict'
-          : (import.meta.env.VITE_PROD_BACKEND_URL || 'https://churn-prediction-flask-app-hquhpswb6q-as.a.run.app') + '/predict';
+          : import.meta.env.VITE_PROD_BACKEND_URL
+            ? `${import.meta.env.VITE_PROD_BACKEND_URL}/predict`
+            : '/api/predict';
 
       const response = await fetch(backendUrl, {
         method: 'POST',
