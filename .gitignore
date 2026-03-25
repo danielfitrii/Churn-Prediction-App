@@ -74,6 +74,10 @@ backend/__pycache__/
 backend/*.pyc
 backend/.pytest_cache/
 
+# ML artifacts (keep out of git)
+backend/models/*.joblib
+*.joblib
+
 # Firebase
 .firebase/
 .firebaserc
