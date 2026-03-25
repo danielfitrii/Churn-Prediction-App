@@ -7,7 +7,7 @@ const Logo = ({ isDarkMode }) => {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
       </svg>
       <span className={`text-2xl font-bold text-gray-800 dark:text-gray-50`}>
-        Churn Predict
+        Churn Defense
       </span>
     </div>
   );

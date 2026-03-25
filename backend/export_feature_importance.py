@@ -28,25 +28,13 @@ rf_pipeline = rf_bundle['pipeline']
 lr_model = lr_pipeline.steps[-1][1]
 rf_model = rf_pipeline.steps[-1][1]
 
-# Logistic Regression coefficients
-if hasattr(lr_model, 'coef_'):
-    lr_coefs = lr_model.coef_[0]
-    lr_importance = dict(zip(feature_names_lr, map(float, lr_coefs)))
-else:
-    raise AttributeError("Logistic Regression model does not have 'coef_' attribute.")
+if not hasattr(lr_model, 'coef_') or not hasattr(rf_model, 'feature_importances_'):
+    raise AttributeError("Model missing required attributes.")
+lr_importance = dict(zip(feature_names_lr, map(float, lr_model.coef_[0])))
+rf_importance = dict(zip(feature_names_rf, map(float, rf_model.feature_importances_)))
 
-# Random Forest feature importances
-if hasattr(rf_model, 'feature_importances_'):
-    rf_importances = rf_model.feature_importances_
-    rf_importance = dict(zip(feature_names_rf, map(float, rf_importances)))
-else:
-    raise AttributeError("Random Forest model does not have 'feature_importances_' attribute.")
-
-# Write to JSON
-with open(os.path.join(PUBLIC_DIR, 'feature_importance_lr.json'), 'w') as f:
-    json.dump(lr_importance, f, indent=2)
-
-with open(os.path.join(PUBLIC_DIR, 'feature_importance_rf.json'), 'w') as f:
-    json.dump(rf_importance, f, indent=2)
+for filename, data in [('feature_importance_lr.json', lr_importance), ('feature_importance_rf.json', rf_importance)]:
+    with open(os.path.join(PUBLIC_DIR, filename), 'w') as f:
+        json.dump(data, f, indent=2)
 
 print("Feature importances exported to public directory.")

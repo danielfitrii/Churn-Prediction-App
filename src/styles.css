@@ -1,0 +1,275 @@
+@import "tailwindcss";
+
+/* Tailwind Base, Components, and Utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Utility Classes */
+.flex-center-gap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-expanded {
+  left: 16rem;
+}
+
+.sidebar-collapsed {
+  left: 5rem;
+}
+
+.main-content-expanded {
+  margin-left: 16rem;
+}
+
+.main-content-collapsed {
+  margin-left: 5rem;
+}
+
+.password-strength-bar {
+  height: 0.5rem;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.min-width-icon {
+  min-width: 20px;
+}
+
+.chart-container {
+  width: 100%;
+  max-width: 900px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.user-select-none {
+  user-select: none;
+}
+
+/* Dark Mode Styles */
+.dark {
+  @apply bg-gray-900 text-gray-50;
+}
+
+.dark .bg-blue-600,
+.dark .hover\:bg-blue-700:hover {
+  @apply bg-gray-800 hover:bg-gray-700;
+}
+
+.dark .bg-white {
+  @apply bg-gray-800;
+}
+
+.dark .bg-gray-50 {
+  @apply bg-gray-700;
+}
+
+.dark .shadow-md {
+  @apply shadow-gray-900/50;
+}
+
+.dark .text-gray-500,
+.dark .text-gray-600 {
+  @apply text-gray-300;
+}
+
+.dark .text-gray-700 {
+  @apply text-gray-200;
+}
+
+.dark .text-gray-900 {
+  @apply text-gray-50;
+}
+
+.dark .text-blue-700 {
+  @apply text-blue-300;
+}
+
+.dark .bg-gray-100 {
+  @apply bg-gray-700;
+}
+
+.dark .hover\:bg-gray-200:hover {
+  @apply hover:bg-gray-600;
+}
+
+.dark .bg-blue-600 {
+  @apply bg-blue-500;
+}
+
+.dark .hover\:bg-blue-700:hover {
+  @apply hover:bg-blue-600;
+}
+
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark select,
+.dark textarea {
+  @apply bg-gray-700 border-gray-600 text-gray-50;
+}
+
+.dark input[type="text"]:focus,
+.dark input[type="email"]:focus,
+.dark input[type="password"]:focus,
+.dark input[type="number"]:focus,
+.dark select:focus,
+.dark textarea:focus {
+  @apply border-blue-400 ring-blue-400;
+}
+
+.dark .peer:checked~.peer-checked\:bg-blue-600 {
+  @apply bg-blue-400;
+}
+
+.dark .peer:focus~.peer-focus\:ring-blue-300 {
+  @apply ring-blue-400;
+}
+
+.dark a {
+  @apply text-blue-300;
+}
+
+.dark a:hover {
+  @apply text-blue-200;
+}
+
+.dark .border-gray-300 {
+  @apply border-gray-600;
+}
+
+.dark .border-gray-200 {
+  @apply border-gray-700;
+}
+
+.dark .text-green-600 {
+  @apply text-green-300;
+}
+
+.dark .text-red-600 {
+  @apply text-red-300;
+}
+
+.dark ::placeholder {
+  @apply text-gray-400;
+}
+
+.dark .recharts-default-tooltip {
+  @apply bg-gray-800 border-gray-700 text-gray-50;
+}
+
+.dark .recharts-tooltip-cursor {
+  @apply fill-gray-700;
+}
+
+.dark .divide-gray-200 {
+  @apply divide-gray-700;
+}
+
+.dark .bg-green-100 {
+  @apply bg-green-900/40;
+}
+
+.dark .bg-yellow-100 {
+  @apply bg-yellow-900/40;
+}
+
+.dark .bg-red-100 {
+  @apply bg-red-900/40;
+}
+
+.dark .text-green-800 {
+  @apply text-green-300;
+}
+
+.dark .text-yellow-800 {
+  @apply text-yellow-300;
+}
+
+.dark .text-red-800 {
+  @apply text-red-300;
+}
+
+.dark .bg-blue-50 {
+  @apply bg-blue-900/40;
+}
+
+.dark .text-blue-800 {
+  @apply text-blue-300;
+}
+
+.dark .border-blue-500 {
+  @apply border-blue-300;
+}
+
+.dark .border-l.border-gray-300 {
+  @apply border-gray-600;
+}
+
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  @apply stroke-gray-700;
+}
+
+.dark .recharts-xAxis .recharts-cartesian-axis-tick-value,
+.dark .recharts-yAxis .recharts-cartesian-axis-tick-value {
+  @apply fill-gray-300;
+}
+
+.dark .recharts-tooltip-label {
+  @apply text-gray-300;
+}
+
+.dark .recharts-legend-item-text {
+  @apply text-gray-300;
+}
+
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  @apply text-gray-50;
+}
+
+.dark p {
+  @apply text-gray-300;
+}
+
+.dark .text-sm {
+  @apply text-gray-400;
+}
+
+.dark .text-xs {
+  @apply text-gray-500;
+}
+
+.dark label {
+  @apply text-gray-300;
+}
+
+.dark th {
+  @apply text-gray-300;
+}
+
+.dark td {
+  @apply text-gray-400;
+}
+
+.dark .text-3xl {
+  @apply text-gray-50;
+}
+
+.dark .text-gray-400 {
+  @apply text-gray-500;
+}
+
+
+

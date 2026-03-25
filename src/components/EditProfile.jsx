@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { useNavigate } from 'react-router-dom';
 import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword as firebaseUpdatePassword } from 'firebase/auth';
-import { Tooltip } from 'react-tooltip';
-import { FiHelpCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { db } from '../firebaseConfig';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -11,6 +10,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 const EditProfile = () => {
   const { user, updateUserProfile } = useAuth();
   const { settings } = useSettings();
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isPasswordSectionOpen, setIsPasswordSectionOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -31,9 +31,7 @@ const EditProfile = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState(user?.profilePicture || null);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPasswords, setShowPasswords] = useState(false);
 
   useEffect(() => {
     // Check if form data has changed from initial values
@@ -90,7 +88,7 @@ const EditProfile = () => {
         newErrors.newPassword = 'Password must be at least 8 characters long';
       }
       if (formData.newPassword !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
+        newErrors.confirmPassword = "Password don’t match";
       }
     }
 
@@ -161,6 +159,8 @@ const EditProfile = () => {
       }));
 
       setHasChanges(false);
+      // Redirect back to dashboard after saving
+      setTimeout(() => navigate('/'), 400);
 
     } catch (error) {
       console.error('Error updating profile or password:', error);
@@ -194,9 +194,9 @@ const EditProfile = () => {
   };
 
   return (
-    <div className={`max-w-4xl mx-auto ${settings.darkMode ? 'text-gray-50' : 'text-gray-800'}`}>
-      <div className={`${settings.darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6`}>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Profile Settings</h2>
+    <div className={`max-w-4xl mx-auto py-6 ${settings.darkMode ? 'text-gray-50' : 'text-gray-800'}`}>
+      <div className={`${settings.darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg px-6 pb-6 pt-3`}>
+        <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Profile Settings</h2>
 
         {showToast && (
           <div className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
@@ -249,21 +249,21 @@ const EditProfile = () => {
                 type="file"
                 ref={fileInputRef}
                 onChange={handleImageChange}
-                accept="image/*"
+                accept="image/jpeg,image/png"
                 className="hidden"
               />
             </div>
             <div>
               <h3 className="text-lg font-medium">Profile Picture</h3>
               <p className={`text-sm ${settings.darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Upload a new profile picture. JPG, GIF or PNG. Max size of 2MB.
+                Upload a new profile picture. JPG or PNG. Max size of 2MB.
               </p>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className={`mt-2 px-4 py-2 ${settings.darkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'} rounded-lg transition-colors`}
               >
-                Change Picture
+                Upload Picture
               </button>
             </div>
           </div>
@@ -295,7 +295,6 @@ const EditProfile = () => {
               <div>
                 <label className="block text-sm font-medium mb-2 flex items-center">
                   Email
-                  <span className="ml-2 text-xs text-gray-500">(Contact support to change)</span>
                 </label>
                 <div className="relative">
                   <input
@@ -335,14 +334,9 @@ const EditProfile = () => {
               onClick={() => setIsPasswordSectionOpen(!isPasswordSectionOpen)}
               className="flex items-center justify-between w-full text-lg font-medium mb-4"
             >
-              {/* Left side: Text and Tooltip Icon */}
+              {/* Left side: Text */}
               <span className="flex items-center space-x-2">
                 <span>Change Password</span>
-                <FiHelpCircle 
-                  className="text-gray-400 dark:text-gray-500 cursor-help w-4 h-4"
-                  data-tooltip-id="password-tooltip"
-                  data-tooltip-content="Click to expand password change options"
-                />
               </span>
               {/* Right side: Collapse Arrow */}
               <svg
@@ -362,7 +356,7 @@ const EditProfile = () => {
                     <label className="block text-sm font-medium mb-2">Current Password</label>
                     <div className="relative">
                       <input
-                        type={showCurrentPassword ? "text" : "password"}
+                        type={showPasswords ? "text" : "password"}
                         name="currentPassword"
                         value={formData.currentPassword}
                         onChange={handleInputChange}
@@ -371,9 +365,11 @@ const EditProfile = () => {
                       <button
                         type="button"
                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        onClick={() => setShowPasswords((v) => !v)}
+                        aria-label={showPasswords ? "Hide passwords" : "Show passwords"}
+                        aria-pressed={showPasswords}
                       >
-                        {showCurrentPassword ? (
+                        {showPasswords ? (
                           <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                           </svg>
@@ -386,11 +382,12 @@ const EditProfile = () => {
                       </button>
                     </div>
                   </div>
+                  <div className="hidden md:block" />
                   <div>
                     <label className="block text-sm font-medium mb-2">New Password</label>
                     <div className="relative">
                       <input
-                        type={showNewPassword ? "text" : "password"}
+                        type={showPasswords ? "text" : "password"}
                         name="newPassword"
                         value={formData.newPassword}
                         onChange={handleInputChange}
@@ -399,9 +396,11 @@ const EditProfile = () => {
                       <button
                         type="button"
                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        onClick={() => setShowPasswords((v) => !v)}
+                        aria-label={showPasswords ? "Hide passwords" : "Show passwords"}
+                        aria-pressed={showPasswords}
                       >
-                        {showNewPassword ? (
+                        {showPasswords ? (
                           <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                           </svg>
@@ -417,12 +416,12 @@ const EditProfile = () => {
                       <div className="mt-2">
                         <div className="h-2 bg-gray-200 rounded-full">
                           <div
-                            className={`h-2 rounded-full ${getPasswordStrengthColor()}`}
+                            className={`password-strength-bar ${getPasswordStrengthColor()}`}
                             style={{ width: `${(passwordStrength / 4) * 100}%` }}
                           />
                         </div>
                         <p className="text-xs mt-1 text-gray-500">
-                          {passwordStrength === 0 && 'Enter a password'}
+                          {passwordStrength === 0 && 'Enter a new password'}
                           {passwordStrength === 1 && 'Weak'}
                           {passwordStrength === 2 && 'Fair'}
                           {passwordStrength === 3 && 'Good'}
@@ -438,7 +437,7 @@ const EditProfile = () => {
                     <label className="block text-sm font-medium mb-2">Confirm New Password</label>
                     <div className="relative">
                       <input
-                        type={showConfirmPassword ? "text" : "password"}
+                        type={showPasswords ? "text" : "password"}
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
@@ -447,9 +446,11 @@ const EditProfile = () => {
                       <button
                         type="button"
                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() => setShowPasswords((v) => !v)}
+                        aria-label={showPasswords ? "Hide passwords" : "Show passwords"}
+                        aria-pressed={showPasswords}
                       >
-                        {showConfirmPassword ? (
+                        {showPasswords ? (
                           <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                           </svg>
@@ -468,8 +469,8 @@ const EditProfile = () => {
                           : 'text-red-600'
                       }`}>
                         {formData.newPassword === formData.confirmPassword
-                          ? 'Passwords match'
-                          : 'Passwords do not match'}
+                          ? 'Password matches'
+                          : "Password don’t match"}
                       </p>
                     )}
                     {errors.confirmPassword && (
@@ -533,8 +534,6 @@ const EditProfile = () => {
           </div>
         </form>
       </div>
-
-      <Tooltip id="password-tooltip" />
 
     </div>
   );

@@ -1,23 +1,21 @@
-import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import ChurnPredictionApp from './ChurnPredictionApp';
-import ChurnDashboard from './ChurnDashboard';
-import ModelExplanation from './ModelExplanation';
+import ChurnPredictionApp from './pages/ChurnPredictionApp';
+import ChurnDashboard from './pages/ChurnDashboard';
+import ModelExplanation from './pages/ModelExplanation';
 import Login from './components/Login';
-import Register from './components/Register';
+import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import Settings from './components/Settings';
-import ForgotPassword from './components/ForgotPassword';
-import ResetPassword from './components/ResetPassword';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
 import EditProfile from './components/EditProfile';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import { registerUser } from './firebaseHelpers';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
+import Header from './components/layout/Header';
+import Sidebar from './components/layout/Sidebar';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -29,10 +27,11 @@ const ProtectedRoute = ({ children }) => {
 
 const Layout = () => {
   const location = useLocation();
-  const { user } = useAuth();
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-
-  const isAuthPage = location.pathname === "/login" || location.pathname === "/register" || location.pathname === "/forgot-password" || location.pathname === "/reset-password";
+  // Normalize trailing slashes so `/register/` still counts as `/register`.
+  const normalizedPath =
+    location.pathname === '/' ? '/' : location.pathname.replace(/\/+$/, '');
+  const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(normalizedPath);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   if (isAuthPage) {
     return (
@@ -49,11 +48,14 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen">
-      <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
-      <Header isExpanded={isSidebarExpanded} />
-      <main className="pt-16 transition-all duration-300 ease-in-out" style={{ marginLeft: isSidebarExpanded ? '16rem' : '5rem' }}>
-        <div className="p-6">
-          <Routes>
+      <Sidebar isExpanded={isExpanded} setIsExpanded={setIsExpanded} />
+      <Header isExpanded={isExpanded} />
+
+      <main
+        className="pt-16 px-4 transition-all duration-300 ease-in-out"
+        style={{ marginLeft: isExpanded ? '16rem' : '5rem' }}
+      >
+        <Routes>
             <Route
               path="/"
               element={
@@ -94,8 +96,8 @@ const Layout = () => {
                 </ProtectedRoute>
               }
             />
-          </Routes>
-        </div>
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
     </div>
   );
@@ -108,14 +110,12 @@ function SessionManager() {
   useEffect(() => {
     if (!user) return;
     let timeoutId;
-    let lastActivity = Date.now();
     let timeoutMinutes = 60;
     if (settings.sessionTimeout && settings.sessionTimeout !== 'never') {
       timeoutMinutes = parseInt(settings.sessionTimeout, 10);
     }
     const timeoutMs = settings.sessionTimeout === 'never' ? null : timeoutMinutes * 60 * 1000;
     const resetTimer = () => {
-      lastActivity = Date.now();
       if (timeoutId) clearTimeout(timeoutId);
       if (timeoutMs) {
         timeoutId = setTimeout(() => {

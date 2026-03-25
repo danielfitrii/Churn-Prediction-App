@@ -1,4 +1,4 @@
-﻿# Logs
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -81,6 +81,17 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 .firestore/
+
+# Sensitive credentials (Firebase/Google/private keys)
+serviceAccount*.json
+firebase-adminsdk*.json
+google-services.json
+credentials*.json
+token*.json
+*.pem
+*.key
+*.p12
+*.pfx
 
 # Build outputs
 build/

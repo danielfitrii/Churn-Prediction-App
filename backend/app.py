@@ -1,78 +1,112 @@
+"""Flask application for customer churn prediction API."""
+import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import joblib
-import numpy as np
-import os
-import pandas as pd
+from config import ALLOWED_ORIGINS, FLASK_CONFIG
+from services.prediction_service import get_prediction_service
+from utils.errors import PredictionError, ModelNotFoundError, InvalidInputError
+from utils.validators import (
+    validate_prediction_request,
+    validate_model_key,
+    validate_threshold_type
+)
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Initialize Flask app
 app = Flask(__name__)
-# Allow both development and production origins
-# Update this list with all your deployed frontend URLs
-# NOTE: Verify which Firebase hosting URLs are currently active and remove any old ones
-allowed_origins = [
-    "https://churn-prediction-app-92228.web.app",  # Current live site
-    "https://churn-prediction-ba530.web.app",  # Verify if this is still active or remove if old
-    "http://localhost:5173",  # Vite dev server default port
-    "http://localhost:3000"   # Common alternative dev port
-]
-# Allow environment variable to add additional origins
-if os.getenv('CORS_ORIGINS'):
-    allowed_origins.extend(os.getenv('CORS_ORIGINS').split(','))
-# Configure CORS with explicit settings to handle preflight requests
-CORS(app, 
-     resources={r"/*": {
-         "origins": allowed_origins,
-         "methods": ["GET", "POST", "OPTIONS"],
-         "allow_headers": ["Content-Type", "Authorization"],
-         "supports_credentials": False
-     }})
 
-# Load both models
-# Use correct path for Docker container
-models_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models')
-models = {
-    'logistic': joblib.load(os.path.join(models_dir, 'logreg_tomek_weighted_final_bundle.joblib'))['pipeline'],
-    'randomForest': joblib.load(os.path.join(models_dir, 'rf_tomek_weighted_final_bundle.joblib'))['pipeline']
-}
+# Configure CORS
+CORS(
+    app,
+    resources={
+        r"/*": {
+            "origins": ALLOWED_ORIGINS,
+            "methods": ["GET", "POST", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": False
+        }
+    }
+)
 
-feature_names = [
-    'tenure', 'MonthlyCharges', 'TotalCharges',
-    'Contract_One year', 'Contract_Two year',
-    'PaymentMethod_Credit card (automatic)', 'PaymentMethod_Electronic check',
-    'PaymentMethod_Mailed check', 'InternetService_Fiber optic',
-    'InternetService_No', 'OnlineSecurity_Yes', 'TechSupport_Yes',
-    'StreamingTV_Yes', 'PaperlessBilling_Yes'
-]
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint."""
+    return jsonify({'status': 'healthy', 'service': 'churn-prediction-api'}), 200
+
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    """
+    Prediction endpoint.
+    
+    Expected request body:
+    {
+        "features": [list of 14 feature values],
+        "model": "logistic" | "randomForest" (optional, default: "logistic"),
+        "threshold_type": "f1" | "cost" (optional, default: "f1")
+    }
+    """
     try:
+        # Get request data
         data = request.get_json()
+        
+        # Validate request
+        validate_prediction_request(data)
+        
+        # Extract and validate parameters
         features = data['features']
-        threshold_type = data.get('threshold_type', 'f1')  # default to F1
-        X = pd.DataFrame([features], columns=feature_names)
         model_key = data.get('model', 'logistic')
-        if model_key not in models:
-            return jsonify({'error': f"Model '{model_key}' not found."}), 400
-        # Map model_key to correct filename
-        bundle_filenames = {
-            'logistic': 'logreg_tomek_weighted_final_bundle.joblib',
-            'randomForest': 'rf_tomek_weighted_final_bundle.joblib'
-        }
-        bundle_filename = bundle_filenames[model_key]
-        bundle = joblib.load(os.path.join(models_dir, bundle_filename))
-        model = bundle['pipeline']
-        threshold = bundle['threshold_f1'] if threshold_type == 'f1' else bundle['threshold_cost']
-        probability = model.predict_proba(X)[0][1]
-        prediction = int(probability >= threshold)
-        return jsonify({
-            'prediction': prediction,
-            'probability': float(probability),
-            'threshold': float(threshold),
-            'threshold_type': threshold_type
-        })
-    except Exception as e:
+        threshold_type = data.get('threshold_type', 'f1')
+        
+        validate_model_key(model_key)
+        validate_threshold_type(threshold_type)
+        
+        # Get prediction service and make prediction
+        prediction_service = get_prediction_service()
+        result = prediction_service.predict(
+            features=features,
+            model_key=model_key,
+            threshold_type=threshold_type
+        )
+        
+        logger.info(f"Prediction successful: model={model_key}, threshold_type={threshold_type}")
+        return jsonify(result), 200
+        
+    except InvalidInputError as e:
+        logger.warning(f"Invalid input: {str(e)}")
         return jsonify({'error': str(e)}), 400
+    except ModelNotFoundError as e:
+        logger.warning(f"Model not found: {str(e)}")
+        return jsonify({'error': str(e)}), 404
+    except PredictionError as e:
+        logger.error(f"Prediction error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        logger.exception(f"Unexpected error: {str(e)}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+
+
+@app.errorhandler(404)
+def not_found(error):
+    """Handle 404 errors."""
+    return jsonify({'error': 'Endpoint not found'}), 404
+
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    """Handle 405 errors."""
+    return jsonify({'error': 'Method not allowed'}), 405
+
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(
+        debug=FLASK_CONFIG['DEBUG'],
+        port=FLASK_CONFIG['PORT']
+    )

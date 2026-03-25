@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useSettings } from '../context/SettingsContext';
+import { useSettings } from '../../context/SettingsContext';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
-import Logo from './Logo';
-import SettingsButtonWithModal from './SettingsButtonWithModal';
+import Logo from '../../components/Logo';
 import { toast } from 'react-toastify';
 
 const ForgotPassword = () => {
@@ -52,36 +51,41 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 ${settings.darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div
+      className={`min-h-screen w-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 ${
+        settings.darkMode ? 'bg-gray-900' : 'bg-gray-50'
+      }`}
+    >
       <div className="absolute top-4 left-4">
         <Logo isDarkMode={settings.darkMode} />
       </div>
 
-      <div className="absolute top-4 right-4">
-        <SettingsButtonWithModal />
-      </div>
-
-      <div className="max-w-md w-full space-y-8">
+      <div className="max-w-sm w-full space-y-8">
         <div>
-          <h2 className={`mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-50`}>
-            Send Password Reset Link
+          <h2 className={`mt-6 text-center text-3xl font-extrabold ${settings.darkMode ? 'text-white' : 'text-gray-900'}`}>
+            Forgot Password?
           </h2>
-          <p className={`mt-2 text-center text-sm text-gray-600 dark:text-gray-300`}>
+          <p className={`mt-2 text-center text-sm ${settings.darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             Enter your email to receive a reset link.
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {settings.notificationType === 'builtin' && status.message && (
-            <div className={`rounded-md p-4 ${
-              status.type === 'error'
-                ? 'bg-red-100 border border-red-400 text-red-700 dark:text-red-300'
-                : 'bg-green-100 border border-green-400 text-green-700 dark:text-green-300'
-            }`} role="alert">
+            <div
+              className={`rounded-md p-4 ${
+                status.type === 'error'
+                  ? 'bg-red-100 border border-red-400 text-red-700 dark:text-red-300'
+                  : 'bg-green-100 border border-green-400 text-green-700 dark:text-green-300'
+              }`}
+              role="alert"
+            >
               <span className="block sm:inline">{status.message}</span>
             </div>
           )}
           <div>
-            <label htmlFor="email" className="sr-only">Email address</label>
+            <label htmlFor="email" className="sr-only">
+              Email address
+            </label>
             <input
               id="email"
               name="email"
@@ -108,7 +112,11 @@ const ForgotPassword = () => {
                 <span className="flex items-center">
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Sending...
                 </span>
@@ -118,8 +126,8 @@ const ForgotPassword = () => {
             </button>
           </div>
           <div className="text-center">
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               className={`font-medium text-blue-600 hover:text-blue-500 ${settings.darkMode ? 'text-blue-400 hover:text-blue-300' : ''}`}
             >
               Back to login
@@ -132,3 +140,4 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
+

@@ -26,30 +26,16 @@ def ensure_list_of_strings(data):
         return list(data.values())
     return data
 
-# Process LR files
-feature_values_lr = ensure_list_of_lists(load_json('feature_values_lr.json'))
-shap_values_lr = ensure_list_of_lists(load_json('shap_values_lr.json'))
-try:
-    feature_names_lr = ensure_list_of_strings(load_json('feature_names_lr.json'))
-except FileNotFoundError:
-    feature_names_lr = None
-
-save_json('feature_values_lr.json', feature_values_lr)
-save_json('shap_values_lr.json', shap_values_lr)
-if feature_names_lr:
-    save_json('feature_names_lr.json', feature_names_lr)
-
-# Process RF files
-feature_values_rf = ensure_list_of_lists(load_json('feature_values_rf.json'))
-shap_values_rf = ensure_list_of_lists(load_json('shap_values_rf.json'))
-try:
-    feature_names_rf = ensure_list_of_strings(load_json('feature_names_rf.json'))
-except FileNotFoundError:
-    feature_names_rf = None
-
-save_json('feature_values_rf.json', feature_values_rf)
-save_json('shap_values_rf.json', shap_values_rf)
-if feature_names_rf:
-    save_json('feature_names_rf.json', feature_names_rf)
+for model in ['lr', 'rf']:
+    feature_values = ensure_list_of_lists(load_json(f'feature_values_{model}.json'))
+    shap_values = ensure_list_of_lists(load_json(f'shap_values_{model}.json'))
+    try:
+        feature_names = ensure_list_of_strings(load_json(f'feature_names_{model}.json'))
+    except FileNotFoundError:
+        feature_names = None
+    save_json(f'feature_values_{model}.json', feature_values)
+    save_json(f'shap_values_{model}.json', shap_values)
+    if feature_names:
+        save_json(f'feature_names_{model}.json', feature_names)
 
 print("Conversion complete! All files are now in the correct format for the frontend.")

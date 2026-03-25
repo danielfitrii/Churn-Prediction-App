@@ -1,5 +1,5 @@
-import { useAuth } from '../context/AuthContext';
-import { useSettings } from '../context/SettingsContext';
+import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
 import { useLocation, Link } from 'react-router-dom';
 
 const Header = ({ isExpanded }) => {
@@ -25,9 +25,12 @@ const Header = ({ isExpanded }) => {
   };
 
   return (
-    <header className={`fixed top-0 right-0 transition-all duration-300 ease-in-out h-16 ${
-      settings.darkMode ? 'bg-gray-800' : 'bg-white'
-    } shadow-sm z-40`} style={{ left: isExpanded ? '16rem' : '5rem' }}>
+    <header
+      className={`fixed top-0 right-0 transition-all duration-300 ease-in-out h-16 ${
+        settings.darkMode ? 'bg-gray-800' : 'bg-white'
+      } shadow-lg z-40`}
+      style={{ left: isExpanded ? '16rem' : '5rem' }}
+    >
       <div className="h-full px-4 flex items-center justify-between">
         <div className="flex items-center">
           <h1 className={`text-xl font-semibold ${settings.darkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -39,20 +42,18 @@ const Header = ({ isExpanded }) => {
           <Link
             to="/profile/edit"
             className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-              settings.darkMode 
-                ? 'bg-gray-700 hover:bg-gray-600' 
-                : 'bg-gray-50 hover:bg-gray-100'
+              settings.darkMode
+                ? 'bg-gray-700 hover:bg-gray-600 border border-gray-600'
+                : 'bg-white hover:bg-gray-50 border border-gray-200'
             }`}
           >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              settings.darkMode ? 'bg-gray-600' : 'bg-gray-200'
-            }`}>
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                settings.darkMode ? 'bg-gray-600' : 'bg-gray-200'
+              }`}
+            >
               {user?.profilePicture ? (
-                <img 
-                  src={user.profilePicture} 
-                  alt="Profile" 
-                  className="w-full h-full rounded-full object-cover"
-                />
+                <img src={user.profilePicture} alt="Profile" className="w-full h-full rounded-full object-cover" />
               ) : (
                 <span className={`text-sm font-medium ${settings.darkMode ? 'text-white' : 'text-gray-600'}`}>
                   {user?.email?.charAt(0).toUpperCase()}
@@ -63,9 +64,7 @@ const Header = ({ isExpanded }) => {
               <p className={`text-sm font-medium ${settings.darkMode ? 'text-white' : 'text-gray-800'}`}>
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className={`text-xs ${settings.darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {user?.email}
-              </p>
+              <p className={`text-xs ${settings.darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user?.email}</p>
             </div>
           </Link>
         </div>
@@ -74,4 +73,4 @@ const Header = ({ isExpanded }) => {
   );
 };
 
-export default Header; 
+export default Header;
