@@ -12,4 +12,4 @@ COPY backend/. backend/
 EXPOSE 8080
 
 # Command to run the application using Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "backend.app:app"] 
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--chdir", "backend", "app:app"]
