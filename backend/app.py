@@ -41,6 +41,12 @@ def health_check():
     return jsonify({'status': 'healthy', 'service': 'churn-prediction-api'}), 200
 
 
+@app.route('/api/health', methods=['GET'])
+def api_health_check():
+    """Health check endpoint (Firebase /api proxy)."""
+    return health_check()
+
+
 @app.route('/predict', methods=['POST'])
 def predict():
     """
@@ -91,6 +97,12 @@ def predict():
     except Exception as e:
         logger.exception(f"Unexpected error: {str(e)}")
         return jsonify({'error': 'An unexpected error occurred'}), 500
+
+
+@app.route('/api/predict', methods=['POST'])
+def api_predict():
+    """Prediction endpoint alias (Firebase /api proxy)."""
+    return predict()
 
 
 @app.errorhandler(404)
