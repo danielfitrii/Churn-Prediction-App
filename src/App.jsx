@@ -52,7 +52,7 @@ const Layout = () => {
       <Header isExpanded={isExpanded} />
 
       <main
-        className="pt-16 px-4 transition-all duration-300 ease-in-out"
+        className="pt-20 px-6 pb-8 transition-all duration-300 ease-in-out"
         style={{ marginLeft: isExpanded ? '16rem' : '5rem' }}
       >
         <Routes>

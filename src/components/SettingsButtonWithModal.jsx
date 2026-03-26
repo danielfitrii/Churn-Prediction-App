@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import { useSettings } from '../context/SettingsContext';
 import LoginSettingsModal from './LoginSettingsModal';
 
 const SettingsButtonWithModal = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const { settings } = useSettings();
 
   return (
     <>
       <button
         type="button"
-        className={`p-2 rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${settings.darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+        className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         onClick={() => setShowSettingsModal(true)}
       >
         <span className="sr-only">Open settings</span>
@@ -28,4 +26,4 @@ const SettingsButtonWithModal = () => {
   );
 };
 
-export default SettingsButtonWithModal; 
+export default SettingsButtonWithModal;

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
-import { FiSave, FiHelpCircle } from 'react-icons/fi';
-import { Tooltip } from 'react-tooltip';
+import { FiSave } from 'react-icons/fi';
 
 const LoginSettingsModal = ({ showModal, onClose }) => {
   const { settings, updateSettings } = useSettings();
@@ -31,18 +30,16 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
     }
   };
 
-  if (!showModal) {
-    return null;
-  }
+  if (!showModal) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-600 bg-opacity-50 flex justify-center items-center">
-      <div className={`relative p-8 rounded-lg shadow-lg ${settings.darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} w-full max-w-md max-h-full overflow-y-auto`}>
+      <div className="relative p-8 rounded-lg shadow-lg bg-white text-gray-900 dark:bg-gray-800 dark:text-white w-full max-w-md max-h-full overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-2xl font-bold">Settings</h3>
           <button
             type="button"
-            className={`text-gray-400 hover:text-gray-500 ${settings.darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-md p-1`}
+            className="text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md p-1"
             onClick={onClose}
           >
             <span className="sr-only">Close settings</span>
@@ -54,11 +51,9 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
         <div className="space-y-6">
           {/* Notification Style */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div>
-                <h3 className="text-lg font-medium">Notification Style</h3>
-                <p className="text-sm text-gray-500">Choose how you want to receive notifications for updates.</p>
-              </div>
+            <div>
+              <h3 className="text-lg font-medium">Notification Style</h3>
+              <p className="text-sm text-gray-500">Choose how you want to receive notifications for updates.</p>
             </div>
             <select
               className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -74,11 +69,9 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
 
           {/* Session Timeout */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div>
-                <h3 className="text-lg font-medium">Session Timeout</h3>
-                <p className="text-sm text-gray-500">Set how long you stay logged in before auto-logout for security.</p>
-              </div>
+            <div>
+              <h3 className="text-lg font-medium">Session Timeout</h3>
+              <p className="text-sm text-gray-500">Set how long you stay logged in before auto-logout for security.</p>
             </div>
             <select
               className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -97,11 +90,9 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
 
           {/* Dark Mode */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div>
-                <h3 className="text-lg font-medium">Enable Dark Mode</h3>
-                <p className="text-sm text-gray-500">Switch between light and dark theme.</p>
-              </div>
+            <div>
+              <h3 className="text-lg font-medium">Enable Dark Mode</h3>
+              <p className="text-sm text-gray-500">Switch between light and dark theme.</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -148,4 +139,4 @@ const LoginSettingsModal = ({ showModal, onClose }) => {
   );
 };
 
-export default LoginSettingsModal; 
+export default LoginSettingsModal;

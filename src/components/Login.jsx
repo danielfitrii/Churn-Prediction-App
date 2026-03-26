@@ -33,7 +33,6 @@ const Login = () => {
     };
 
     const validatePassword = (password) => {
-        // At least 8 characters, 1 uppercase, 1 lowercase, 1 number (symbols allowed)
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
         return passwordRegex.test(password);
     };
@@ -42,7 +41,6 @@ const Login = () => {
         e.preventDefault();
         setError('');
 
-        // Enhanced input validation
         if (!email || !password) {
             setError('Email and password are required.');
             return;
@@ -67,7 +65,6 @@ const Login = () => {
         try {
             const success = await login(email, password);
             if (success) {
-                // Use setTimeout to ensure user is set after login
                 setTimeout(() => {
                     const storedUser = JSON.parse(localStorage.getItem('user'));
                     const name = storedUser?.firstName || storedUser?.email || 'User';
@@ -84,8 +81,6 @@ const Login = () => {
                 }, 100);
                 navigate('/');
             } else {
-                // Since we've already validated the password format, if login fails,
-                // it means either the email or password is incorrect
                 setError('Please check both your email and password. One or both may be incorrect.');
             }
         } catch (err) {
@@ -101,18 +96,17 @@ const Login = () => {
     };
 
     return (
-        <div className={`min-h-screen w-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 ${settings.darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-            {/* Logo - Top Left */}
+        <div className="min-h-screen w-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
             <div className="absolute top-4 left-4">
                 <Logo isDarkMode={settings.darkMode} />
             </div>
 
             <div className="max-w-sm w-full space-y-8">
                 <div>
-                    <h2 className={`mt-6 text-center text-3xl font-extrabold text-gray-900`}>
+                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
                         Great to see you!
                     </h2>
-                    <p className={`mt-2 text-center text-sm text-gray-600 dark:text-gray-500`}>
+                    <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-300">
                         Sign in to monitor churn risk and identify at-risk accounts.
                     </p>
                 </div>
@@ -131,7 +125,7 @@ const Login = () => {
                                 type="email"
                                 autoComplete="email"
                                 required
-                                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'} placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                                 placeholder="Email address"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -145,7 +139,7 @@ const Login = () => {
                                 type={showPassword ? "text" : "password"}
                                 autoComplete="current-password"
                                 required
-                                className={`appearance-none rounded-md relative block w-full px-3 py-2 pr-10 border ${settings.darkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'} placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                                className="appearance-none rounded-md relative block w-full px-3 py-2 pr-10 border border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                                 placeholder="Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -181,14 +175,14 @@ const Login = () => {
                                 checked={rememberMe}
                                 onChange={e => setRememberMe(e.target.checked)}
                             />
-                            <label htmlFor="remember-me" className={`ml-2 block text-sm ${settings.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                                 Remember me
                             </label>
                         </div>
                         <div className="text-sm">
                             <Link
                                 to="/forgot-password"
-                                className={`font-medium text-blue-600 hover:text-blue-500 ${settings.darkMode ? 'text-blue-400 hover:text-blue-300' : ''}`}
+                                className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                             >
                                 Forgot password?
                             </Link>
@@ -199,8 +193,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                            className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                         >
                             {loading ? (
                                 <span className="flex items-center">
@@ -219,7 +212,7 @@ const Login = () => {
                     <div className="text-sm text-center">
                         <Link
                             to="/register"
-                            className={`font-medium text-blue-600 hover:text-blue-500 ${settings.darkMode ? 'text-blue-400 hover:text-blue-300' : ''}`}
+                            className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                         >
                             Create an account
                         </Link>
